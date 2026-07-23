@@ -1,0 +1,108 @@
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Worker, Job } from 'bullmq';
+import { Redis } from 'ioredis';
+import { basename } from 'path';
+import { crawlWebsite } from '@surface/crawler';
+import { buildClassifications, uniqueFunctionalities, summarizeWithLLM } from '@surface/classifier';
+import { QueueJobData, PageExtract } from '@surface/shared';
+import { Config } from '../config';
+import { CRAWL_QUEUE_NAME } from '../queue/crawl-queue.service';
+import { ScanService } from './scan.service';
+import { GraphService } from '../graph/graph.service';
+import { RiskService } from '../risk/risk.service';
+import { TechService } from '../tech/tech.service';
+
+@Injectable()
+export class CrawlWorker implements OnModuleDestroy {
+  private worker?: Worker<QueueJobData>;
+  private redis: Redis;
+
+  constructor(
+    private scanService: ScanService,
+    private graphService: GraphService,
+    private riskService: RiskService,
+    private techService: TechService,
+  ) {
+    this.redis = new Redis(Config.REDIS_URL);
+  }
+
+  start(): void {
+    if (this.worker) return;
+    this.worker = new Worker<QueueJobData>(
+      CRAWL_QUEUE_NAME,
+      async (job) => this.process(job),
+      {
+        connection: this.redis,
+        concurrency: 1,
+      },
+    );
+  }
+
+  async process(job: Job<QueueJobData>): Promise<void> {
+    const { scanId, url, options } = job.data;
+    await this.scanService.startProcessing(scanId);
+    const start = Date.now();
+
+    try {
+      const result = await crawlWebsite(url, {
+        ...options,
+        screenshotDir: Config.SCREENSHOT_DIR,
+      });
+
+      const pages: PageExtract[] = result.pages.map((p) => ({
+        ...p,
+        screenshotPath: p.screenshotPath ? `/screenshots/${basename(p.screenshotPath)}` : undefined,
+      }));
+
+      const classifications = buildClassifications(pages);
+      const graph = this.graphService.buildGraphData(
+        pages,
+        result.forms,
+        result.endpoints,
+        result.assets,
+        classifications,
+      );
+      const techStack = this.techService.detect(pages, result.assets);
+
+      const summary = {
+        url,
+        pageCount: pages.length,
+        functionalities: uniqueFunctionalities(classifications),
+        endpoints: result.endpoints.map((e) => ({ url: e.url, type: e.type })),
+        forms: result.forms.map((f) => ({ action: f.action, method: f.method })),
+      };
+
+      let risks = this.riskService.matchKnownRisks(classifications);
+
+      if (!Config.DISABLE_LLM && Config.OLLAMA_HOST) {
+        const llmRisks = await summarizeWithLLM(summary, {
+          ollamaHost: Config.OLLAMA_HOST,
+          ollamaModel: Config.OLLAMA_MODEL,
+        });
+        if (llmRisks) {
+          risks = [...risks, ...llmRisks];
+        }
+      }
+
+      await this.scanService.complete(scanId, {
+        pages,
+        forms: result.forms,
+        endpoints: result.endpoints,
+        assets: result.assets,
+        classifications,
+        graph,
+        risks,
+        techStack,
+        errors: result.errors,
+        durationMs: Date.now() - start,
+      });
+    } catch (error) {
+      await this.scanService.fail(scanId, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  async onModuleDestroy() {
+    await this.worker?.close();
+    await this.redis.quit();
+  }
+}

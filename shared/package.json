@@ -1,0 +1,15 @@
+{
+  "name": "@surface/shared",
+  "version": "0.0.1",
+  "description": "Shared contracts and DTOs for the attack surface prototype.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

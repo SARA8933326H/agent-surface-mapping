@@ -1,0 +1,46 @@
+{
+  "version": "1.0.0",
+  "description": "Maps discovered functionality to OWASP Top 10 2021 categories and representative CWEs. The AI must only use these mappings; it must never invent new vulnerabilities.",
+  "categories": {
+    "A01:2021-Broken Access Control": {
+      "cwes": ["CWE-22", "CWE-285", "CWE-287", "CWE-306", "CWE-307", "CWE-798"],
+      "description": "Access control enforces policy such that users cannot act outside of their intended permissions."
+    },
+    "A02:2021-Cryptographic Failures": {
+      "cwes": ["CWE-259", "CWE-327", "CWE-331", "CWE-798"],
+      "description": "Failures related to cryptography (or lack of it) that lead to sensitive data exposure."
+    },
+    "A03:2021-Injection": {
+      "cwes": ["CWE-79", "CWE-89", "CWE-73", "CWE-78", "CWE-94"],
+      "description": "User-supplied data is sent to an interpreter as part of a command or query."
+    },
+    "A04:2021-Insecure Design": {
+      "cwes": ["CWE-73", "CWE-209", "CWE-256", "CWE-501", "CWE-522"],
+      "description": "A collection of weaknesses related to design and architectural flaws."
+    },
+    "A05:2021-Security Misconfiguration": {
+      "cwes": ["CWE-2", "CWE-16", "CWE-209", "CWE-256", "CWE-501", "CWE-522", "CWE-611", "CWE-776", "CWE-798"],
+      "description": "Missing or insecure security hardening across the application stack."
+    },
+    "A06:2021-Vulnerable and Outdated Components": {
+      "cwes": ["CWE-1104", "CWE-798"],
+      "description": "Using components with known vulnerabilities or that are out of support."
+    },
+    "A07:2021-Identification and Authentication Failures": {
+      "cwes": ["CWE-287", "CWE-306", "CWE-307", "CWE-798", "CWE-640", "CWE-798"],
+      "description": "Functionality related to authentication and session management can be circumvented or abused."
+    },
+    "A08:2021-Software and Data Integrity Failures": {
+      "cwes": ["CWE-345", "CWE-502", "CWE-829"],
+      "description": "Code and infrastructure that do not protect against integrity violations."
+    },
+    "A09:2021-Security Logging and Monitoring Failures": {
+      "cwes": ["CWE-117", "CWE-223", "CWE-532", "CWE-778"],
+      "description": "Insufficient logging and monitoring allows attackers to advance attacks undetected."
+    },
+    "A10:2021-Server-Side Request Forgery (SSRF)": {
+      "cwes": ["CWE-918"],
+      "description": "The web application fetches a remote resource without validating the user-supplied URL."
+    }
+  }
+}

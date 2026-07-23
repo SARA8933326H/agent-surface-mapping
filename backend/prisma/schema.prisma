@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Scan {
+  id              String    @id @default(uuid())
+  url             String
+  status          String    @default("PENDING")
+  progress        Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  durationMs      Int       @default(0)
+  options         Json?
+  pages           Page[]
+  forms           Form[]
+  endpoints       Endpoint[]
+  assets          Asset[]
+  classifications Json?
+  graph           Graph?
+  risks           Risk[]
+  reports         Report[]
+  errors          Json?
+  techStack       Json?
+}
+
+model Page {
+  id              String     @id @default(uuid())
+  scanId          String
+  scan            Scan       @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  url             String
+  title           String?
+  statusCode      Int?
+  contentType     String?
+  headers         Json?
+  cookies         Json?
+  extractedLinks  Json?
+  screenshotPath  String?
+  depth           Int        @default(0)
+  parentUrl       String?
+  createdAt       DateTime   @default(now())
+  forms           Form[]
+  endpoints       Endpoint[]
+  assets          Asset[]
+}
+
+model Form {
+  id         String  @id @default(uuid())
+  scanId     String
+  scan       Scan    @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  pageId     String?
+  page       Page?   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  action     String?
+  method     String
+  selector   String?
+  fields     Json
+  buttons    Json
+}
+
+model Endpoint {
+  id             String  @id @default(uuid())
+  scanId         String
+  scan           Scan    @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  pageId         String?
+  page           Page?   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  url            String
+  method         String  @default("GET")
+  type           String  @default("UNKNOWN")
+  discoveredFrom String?
+  contentType    String?
+  statusCode     Int?
+}
+
+model Asset {
+  id             String  @id @default(uuid())
+  scanId         String
+  scan           Scan    @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  pageId         String?
+  page           Page?   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  url            String
+  type           String  @default("OTHER")
+  discoveredFrom String?
+}
+
+model Graph {
+  id     String @id @default(uuid())
+  scanId String @unique
+  scan   Scan   @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  nodes  Json
+  edges  Json
+}
+
+model Risk {
+  id          String @id @default(uuid())
+  scanId      String
+  scan        Scan   @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  category    String
+  description String
+  owasp       String?
+  cwe         String?
+  severity    String
+  evidence    String
+}
+
+model Report {
+  id        String   @id @default(uuid())
+  scanId    String
+  scan      Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  format    String
+  path      String
+  createdAt DateTime @default(now())
+}

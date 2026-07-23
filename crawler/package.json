@@ -1,0 +1,19 @@
+{
+  "name": "@surface/crawler",
+  "version": "0.0.1",
+  "description": "Playwright-based crawler for attack surface discovery.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "playwright": "^1.45.0",
+    "@surface/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

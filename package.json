@@ -1,0 +1,24 @@
+{
+  "name": "attack-surface-prototype",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Free, open-source attack surface discovery prototype.",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm --filter @surface/backend dev & pnpm --filter @surface/frontend dev",
+    "build": "pnpm -r build",
+    "start:backend": "pnpm --filter @surface/backend start:prod",
+    "start:worker": "pnpm --filter @surface/backend worker",
+    "start:frontend": "pnpm --filter @surface/frontend start",
+    "db:generate": "pnpm --filter @surface/backend db:generate",
+    "db:migrate": "pnpm --filter @surface/backend db:migrate"
+  },
+  "workspaces": [
+    "backend",
+    "frontend",
+    "shared",
+    "crawler",
+    "classifier",
+    "reports"
+  ]
+}

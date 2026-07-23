@@ -1,0 +1,266 @@
+{
+  "version": "1.0.0",
+  "description": "Risk patterns derived from the OWASP mapping. Each pattern links a discovered functionality to known risks.",
+  "patterns": [
+    {
+      "functionality": "AUTH",
+      "risks": [
+        {
+          "title": "Broken Authentication",
+          "owasp": "A07:2021-Identification and Authentication Failures",
+          "cwe": "CWE-287",
+          "severity": "HIGH",
+          "description": "Authentication mechanisms may be bypassed, brute-forced, or abused."
+        },
+        {
+          "title": "Credential Stuffing",
+          "owasp": "A07:2021-Identification and Authentication Failures",
+          "cwe": "CWE-307",
+          "severity": "MEDIUM",
+          "description": "Login endpoints may be vulnerable to automated credential-stuffing attacks."
+        },
+        {
+          "title": "Weak Password Policy",
+          "owasp": "A07:2021-Identification and Authentication Failures",
+          "cwe": "CWE-521",
+          "severity": "MEDIUM",
+          "description": "Registration or password-reset flows may not enforce adequate password strength."
+        },
+        {
+          "title": "User Enumeration",
+          "owasp": "A07:2021-Identification and Authentication Failures",
+          "cwe": "CWE-204",
+          "severity": "LOW",
+          "description": "Authentication responses may reveal whether a username or email exists."
+        },
+        {
+          "title": "Password Reset Abuse",
+          "owasp": "A07:2021-Identification and Authentication Failures",
+          "cwe": "CWE-640",
+          "severity": "MEDIUM",
+          "description": "Password-reset flows may be abused to take over accounts."
+        },
+        {
+          "title": "Session Fixation",
+          "owasp": "A07:2021-Identification and Authentication Failures",
+          "cwe": "CWE-384",
+          "severity": "MEDIUM",
+          "description": "Session identifiers may not be rotated after authentication."
+        }
+      ]
+    },
+    {
+      "functionality": "ADMIN",
+      "risks": [
+        {
+          "title": "Broken Access Control",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-285",
+          "severity": "CRITICAL",
+          "description": "Admin panels may be accessible without proper authorization."
+        },
+        {
+          "title": "Sensitive Data Exposure",
+          "owasp": "A02:2021-Cryptographic Failures",
+          "cwe": "CWE-311",
+          "severity": "HIGH",
+          "description": "Administrative endpoints may expose sensitive user or system data."
+        },
+        {
+          "title": "Insecure Direct Object Reference",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-639",
+          "severity": "HIGH",
+          "description": "Admin CRUD operations may allow access to objects belonging to other users."
+        }
+      ]
+    },
+    {
+      "functionality": "DASHBOARD",
+      "risks": [
+        {
+          "title": "Broken Access Control",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-285",
+          "severity": "HIGH",
+          "description": "Dashboards may expose data or actions to unauthorized users."
+        },
+        {
+          "title": "Information Disclosure",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-209",
+          "severity": "LOW",
+          "description": "Dashboards may leak internal identifiers, stack traces, or business metrics."
+        }
+      ]
+    },
+    {
+      "functionality": "SEARCH",
+      "risks": [
+        {
+          "title": "SQL Injection",
+          "owasp": "A03:2021-Injection",
+          "cwe": "CWE-89",
+          "severity": "HIGH",
+          "description": "Search parameters may be passed unsanitized to database queries."
+        },
+        {
+          "title": "Cross-Site Scripting (XSS)",
+          "owasp": "A03:2021-Injection",
+          "cwe": "CWE-79",
+          "severity": "MEDIUM",
+          "description": "Search results may reflect user input without proper encoding."
+        },
+        {
+          "title": "Server-Side Request Forgery (SSRF)",
+          "owasp": "A10:2021-Server-Side Request Forgery (SSRF)",
+          "cwe": "CWE-918",
+          "severity": "MEDIUM",
+          "description": "Search functionality may fetch or proxy resources from attacker-supplied URLs."
+        }
+      ]
+    },
+    {
+      "functionality": "CRUD",
+      "risks": [
+        {
+          "title": "Mass Assignment",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-915",
+          "severity": "MEDIUM",
+          "description": "API endpoints may accept client-controlled object properties."
+        },
+        {
+          "title": "Insecure Direct Object Reference",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-639",
+          "severity": "HIGH",
+          "description": "Object identifiers in URLs may allow access to other users' records."
+        },
+        {
+          "title": "Cross-Site Request Forgery",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-352",
+          "severity": "MEDIUM",
+          "description": "State-changing forms may lack anti-CSRF tokens."
+        }
+      ]
+    },
+    {
+      "functionality": "UPLOAD",
+      "risks": [
+        {
+          "title": "Unrestricted File Upload",
+          "owasp": "A03:2021-Injection",
+          "cwe": "CWE-434",
+          "severity": "CRITICAL",
+          "description": "File uploads may accept dangerous file types leading to remote code execution."
+        },
+        {
+          "title": "Path Traversal",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-22",
+          "severity": "HIGH",
+          "description": "Uploaded file paths may be controlled by the attacker."
+        }
+      ]
+    },
+    {
+      "functionality": "DOWNLOAD",
+      "risks": [
+        {
+          "title": "Path Traversal",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-22",
+          "severity": "HIGH",
+          "description": "Download endpoints may allow reading arbitrary files."
+        },
+        {
+          "title": "Sensitive Data Exposure",
+          "owasp": "A02:2021-Cryptographic Failures",
+          "cwe": "CWE-311",
+          "severity": "MEDIUM",
+          "description": "Generated or exported files may contain sensitive data without access control."
+        }
+      ]
+    },
+    {
+      "functionality": "API",
+      "risks": [
+        {
+          "title": "Broken Object Level Authorization",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-285",
+          "severity": "HIGH",
+          "description": "API endpoints may not enforce authorization for each object."
+        },
+        {
+          "title": "Broken Authentication",
+          "owasp": "A07:2021-Identification and Authentication Failures",
+          "cwe": "CWE-306",
+          "severity": "HIGH",
+          "description": "API endpoints may lack authentication or rely on weak tokens."
+        },
+        {
+          "title": "Excessive Data Exposure",
+          "owasp": "A04:2021-Insecure Design",
+          "cwe": "CWE-213",
+          "severity": "MEDIUM",
+          "description": "API responses may expose more data than intended."
+        },
+        {
+          "title": "Mass Assignment",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-915",
+          "severity": "MEDIUM",
+          "description": "API endpoints may accept unexpected properties."
+        }
+      ]
+    },
+    {
+      "functionality": "GRAPHQL",
+      "risks": [
+        {
+          "title": "GraphQL Introspection Abuse",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-16",
+          "severity": "LOW",
+          "description": "Introspection may leak the full schema to unauthenticated users."
+        },
+        {
+          "title": "GraphQL Query Depth / Complexity Attacks",
+          "owasp": "A04:2021-Insecure Design",
+          "cwe": "CWE-770",
+          "severity": "MEDIUM",
+          "description": "Deep or recursive queries may cause denial of service."
+        },
+        {
+          "title": "GraphQL Authorization Bypass",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-285",
+          "severity": "HIGH",
+          "description": "Resolvers may not enforce field- or object-level authorization."
+        }
+      ]
+    },
+    {
+      "functionality": "HIDDEN",
+      "risks": [
+        {
+          "title": "Security Through Obscurity",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-16",
+          "severity": "LOW",
+          "description": "Hidden or debug endpoints may be reachable without authentication."
+        },
+        {
+          "title": "Information Disclosure",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-209",
+          "severity": "MEDIUM",
+          "description": "Debug or internal routes may expose stack traces, configs, or routes."
+        }
+      ]
+    }
+  ]
+}
