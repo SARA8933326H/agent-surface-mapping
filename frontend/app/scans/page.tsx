@@ -1,6 +1,8 @@
 import { ScanForm } from '@/components/scan-form';
 import { ScanList } from '@/components/scan-list';
 
+export const dynamic = 'force-dynamic';
+
 export default function ScansPage() {
   return (
     <main className="mx-auto max-w-7xl px-6 py-10">

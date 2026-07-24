@@ -41,7 +41,7 @@ export async function analyzePage(
   const cookies = await page.context().cookies(url).then((arr) => arr.map((c) => `${c.name}=${c.value}`));
 
   const links = await extractLinks(page, url);
-  const forms = await extractForms(page);
+  const forms = await extractForms(page, url);
   const domAssets = await extractAssets(page, url);
   const html = await page.content().catch(() => '');
   const jsRoutes = extractJsRoutes(html, url);

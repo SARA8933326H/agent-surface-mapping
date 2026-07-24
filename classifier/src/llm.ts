@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RiskDto } from '@surface/shared';
+import { RiskDto, Severity } from '@surface/shared';
 
 export interface LLMOptions {
   ollamaHost?: string;
@@ -21,8 +21,8 @@ export async function summarizeWithLLM(
     url: string;
     pageCount: number;
     functionalities: string[];
-    endpoints: { url: string; type: string }[];
-    forms: { action?: string; method: string }[];
+    endpoints: { url: string; type: string; method?: string }[];
+    forms: { action?: string; method?: string }[];
   },
   options: LLMOptions = {},
 ): Promise<RiskDto[] | null> {
@@ -55,7 +55,7 @@ export async function summarizeWithLLM(
         description: s.description,
         owasp: s.owasp,
         cwe: s.cwe,
-        severity: normalizeSeverity(s.severity),
+        severity: normalizeSeverity(s.severity) as Severity,
         evidence: s.evidence || 'Suggested by local LLM from existing heuristic classification.',
       }));
   } catch {
@@ -67,8 +67,8 @@ function buildPrompt(summary: {
   url: string;
   pageCount: number;
   functionalities: string[];
-  endpoints: { url: string; type: string }[];
-  forms: { action?: string; method: string }[];
+  endpoints: { url: string; type: string; method?: string }[];
+  forms: { action?: string; method?: string }[];
 }): string {
   return `You are a security assistant helping map discovered web application functionality to known OWASP Top 10 and CWE risks. You must NOT invent vulnerabilities that are not supported by the evidence below.
 
@@ -76,7 +76,7 @@ Target URL: ${summary.url}
 Pages discovered: ${summary.pageCount}
 Detected functionalities: ${summary.functionalities.join(', ')}
 Discovered endpoints: ${summary.endpoints.map((e) => `${e.method || 'GET'} ${e.url} (${e.type})`).join(', ') || 'none'}
-Discovered forms: ${summary.forms.map((f) => `${f.method} ${f.action || 'self'}`).join(', ') || 'none'}
+Discovered forms: ${summary.forms.map((f) => `${f.method || 'GET'} ${f.action || 'self'}`).join(', ') || 'none'}
 
 Return ONLY a JSON array of risk objects. Each object must contain:
 - category: short risk title
@@ -90,12 +90,12 @@ Do not invent risks. Only map to known OWASP Top 10 and CWE categories. If no ri
 `;
 }
 
-function normalizeSeverity(s?: string): 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO' {
+function normalizeSeverity(s?: string): Severity {
   const upper = (s || 'INFO').toUpperCase();
   if (['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'].includes(upper)) {
-    return upper as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+    return upper as Severity;
   }
-  return 'INFO';
+  return Severity.INFO;
 }
 
 function extractJSON<T>(text: string): T | null {

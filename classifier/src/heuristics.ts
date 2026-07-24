@@ -52,7 +52,7 @@ export function classifyPage(page: PageExtract): PageClassification {
   // CRUD detection
   const crudMethods = new Set(['POST', 'PUT', 'DELETE', 'PATCH']);
   const crudButtons = /save|update|delete|create|edit|remove|add new/i;
-  if (page.forms.some((f) => crudMethods.has(f.method) || f.buttons.some((b) => crudButtons.test(b)))) {
+  if (page.forms.some((f) => crudMethods.has(f.method || 'GET') || f.buttons.some((b) => crudButtons.test(b)))) {
     functionality.add(FunctionalityType.CRUD);
     signals.push('crud_form');
   }
@@ -133,7 +133,7 @@ export function classifyEndpoint(endpoint: EndpointExtract): FunctionalityType[]
 export function classifyForm(form: FormExtract): FunctionalityType[] {
   const types: FunctionalityType[] = [];
   const action = (form.action || '').toLowerCase();
-  const method = form.method.toUpperCase();
+  const method = (form.method || 'GET').toUpperCase();
   const hasPassword = form.fields.some((f) => f.type === 'password');
   const hasFile = form.fields.some((f) => f.type === 'file');
   const hasSearch = form.fields.some((f) => f.type === 'search');

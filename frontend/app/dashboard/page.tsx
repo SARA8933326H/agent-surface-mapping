@@ -4,6 +4,8 @@ import { listScans } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const scans = await listScans();
   const completed = scans.filter((s) => s.status === 'COMPLETED').length;

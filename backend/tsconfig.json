@@ -4,6 +4,9 @@
     "target": "ES2022",
     "lib": ["ES2022"],
     "strict": true,
+    "strictPropertyInitialization": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -14,12 +17,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": "./",
-    "paths": {
-      "@surface/shared": ["../shared/src/index.ts"],
-      "@surface/crawler": ["../crawler/src/index.ts"],
-      "@surface/classifier": ["../classifier/src/index.ts"],
-      "@surface/reports": ["../reports/src/index.ts"]
-    }
+    "moduleResolution": "node"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test"]

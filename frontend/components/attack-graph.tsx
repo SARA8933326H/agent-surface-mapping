@@ -28,8 +28,9 @@ const nodeTypeColors: Record<GraphNodeType, string> = {
   [GraphNodeType.OBJECT]: '#3B82F6',
 };
 
-function BaseNode({ data, type }: NodeProps<{ label: string }>) {
-  const color = nodeTypeColors[(type as GraphNodeType) || GraphNodeType.PAGE];
+function BaseNode(props: NodeProps) {
+  const data = props.data as { label: string };
+  const color = nodeTypeColors[(props.type as GraphNodeType) || GraphNodeType.PAGE];
   return (
     <div
       className="rounded-md border px-3 py-2 text-xs font-medium text-white shadow-sm"

@@ -42,7 +42,7 @@ export class ScanService {
         url: dto.url,
         status: ScanStatus.PENDING,
         progress: 0,
-        options: dto.options ? (dto.options as unknown as Record<string, unknown>) : null,
+        options: dto.options as any,
       },
     });
     await this.queue.add({ scanId: scan.id, url: dto.url, options: dto.options || {} });
@@ -97,9 +97,9 @@ export class ScanService {
             title: page.title,
             statusCode: page.statusCode,
             contentType: page.contentType,
-            headers: page.headers as unknown as Record<string, unknown>,
-            cookies: page.cookies as unknown as string[],
-            extractedLinks: page.extractedLinks as unknown as string[],
+            headers: page.headers as any,
+            cookies: page.cookies as any,
+            extractedLinks: page.extractedLinks as any,
             screenshotPath: page.screenshotPath,
             depth: page.depth,
             parentUrl: page.parentUrl,
@@ -121,10 +121,10 @@ export class ScanService {
             scanId: id,
             pageId,
             action: form.action,
-            method: form.method,
+            method: form.method || 'GET',
             selector: form.selector,
-            fields: form.fields as unknown as Record<string, unknown>[],
-            buttons: form.buttons as unknown as string[],
+            fields: form.fields as any,
+            buttons: form.buttons as any,
           },
         });
       }
@@ -175,8 +175,8 @@ export class ScanService {
       await tx.graph.create({
         data: {
           scanId: id,
-          nodes: data.graph.nodes as unknown as Record<string, unknown>[],
-          edges: data.graph.edges as unknown as Record<string, unknown>[],
+          nodes: data.graph.nodes as any,
+          edges: data.graph.edges as any,
         },
       });
 
@@ -186,9 +186,9 @@ export class ScanService {
           status: ScanStatus.COMPLETED,
           progress: 100,
           durationMs: data.durationMs,
-          classifications: data.classifications as unknown as Record<string, unknown>[],
-          errors: data.errors as unknown as string[],
-          techStack: data.techStack as unknown as string[],
+          classifications: data.classifications as any,
+          errors: data.errors as any,
+          techStack: data.techStack as any,
           updatedAt: new Date(),
         },
       });
@@ -201,7 +201,7 @@ export class ScanService {
       data: {
         status: ScanStatus.FAILED,
         progress: 0,
-        errors: [error] as unknown as string[],
+        errors: [error] as any,
         updatedAt: new Date(),
       },
     });

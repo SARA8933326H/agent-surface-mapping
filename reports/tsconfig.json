@@ -13,11 +13,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "baseUrl": ".",
-    "paths": {
-      "@surface/shared": ["../shared/src/index.ts"]
-    }
+    "moduleResolution": "node"
   },
   "include": ["src/**/*"]
 }

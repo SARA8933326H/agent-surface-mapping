@@ -1,4 +1,4 @@
-import { CreateScanDto, ScanDetailsDto, ScanDto, ScanStatsDto } from '@surface/shared';
+import { CreateScanDto, ReportDto, ScanDetailsDto, ScanDto, ScanStatsDto } from '@surface/shared';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -33,8 +33,8 @@ export async function createScan(dto: CreateScanDto): Promise<ScanDto> {
   });
 }
 
-export async function generateReport(scanId: string, format: 'PDF' | 'MARKDOWN' | 'JSON') {
-  return fetchJson(`/reports/scans/${scanId}/${format.toLowerCase()}`, { method: 'POST' });
+export async function generateReport(scanId: string, format: 'PDF' | 'MARKDOWN' | 'JSON'): Promise<ReportDto> {
+  return fetchJson<ReportDto>(`/reports/scans/${scanId}/${format.toLowerCase()}`, { method: 'POST' });
 }
 
 export function reportDownloadUrl(reportId: string): string {

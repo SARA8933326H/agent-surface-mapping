@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { ReportsList } from '@/components/reports-list';
 import { getScan } from '@/lib/api';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ScanReportsPage({ params }: { params: { id: string } }) {
   const scan = await getScan(params.id);
   return (

@@ -25,7 +25,7 @@ export async function extractLinks(page: Page, baseUrl: string): Promise<string[
   return [...new Set(links)];
 }
 
-export async function extractForms(page: Page): Promise<FormExtract[]> {
+export async function extractForms(page: Page, baseUrl: string): Promise<FormExtract[]> {
   return page.$$eval('form', (forms, base) => {
     return forms.map((form, idx): FormExtract => {
       const action = form.getAttribute('action') || base;

@@ -77,7 +77,7 @@ export class CrawlWorker implements OnModuleDestroy {
       if (!Config.DISABLE_LLM && Config.OLLAMA_HOST) {
         const llmRisks = await summarizeWithLLM(summary, {
           ollamaHost: Config.OLLAMA_HOST,
-          ollamaModel: Config.OLLAMA_MODEL,
+          model: Config.OLLAMA_MODEL,
         });
         if (llmRisks) {
           risks = [...risks, ...llmRisks];

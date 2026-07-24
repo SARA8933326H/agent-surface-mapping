@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { ScanTabs } from '@/components/scan-tabs';
 import { getScan, getScanStats } from '@/lib/api';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ScanDetailPage({ params }: { params: { id: string } }) {
   const scan = await getScan(params.id);
   const stats = await getScanStats(params.id);

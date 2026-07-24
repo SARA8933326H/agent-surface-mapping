@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { AttackGraph } from '@/components/attack-graph';
 import { getScan } from '@/lib/api';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ScanGraphPage({ params }: { params: { id: string } }) {
   const scan = await getScan(params.id);
   return (

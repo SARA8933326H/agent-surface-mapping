@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { CrawlWorker } from './queue/crawl-worker';
+import { CrawlWorker } from './scan/crawl-worker.service';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);

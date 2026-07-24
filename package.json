@@ -6,7 +6,7 @@
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "pnpm --filter @surface/backend dev & pnpm --filter @surface/frontend dev",
-    "build": "pnpm -r build",
+    "build": "pnpm db:generate && pnpm --filter @surface/shared build && pnpm --filter @surface/crawler build && pnpm --filter @surface/classifier build && pnpm --filter @surface/reports build && pnpm --filter @surface/backend build && pnpm --filter @surface/frontend build",
     "start:backend": "pnpm --filter @surface/backend start:prod",
     "start:worker": "pnpm --filter @surface/backend worker",
     "start:frontend": "pnpm --filter @surface/frontend start",

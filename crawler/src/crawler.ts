@@ -155,7 +155,7 @@ export async function crawlWebsite(startUrl: string, options: CrawlOptions = {})
       await page.screenshot({ path: screenshotPath, fullPage: false }).catch(() => undefined);
 
       const links = await extractLinks(page, normalized);
-      const forms = await extractForms(page);
+      const forms = await extractForms(page, normalized);
       const domAssets = await extractAssets(page, normalized);
       const html = await page.content().catch(() => '');
       const jsRoutes = extractJsRoutes(html, normalized);
