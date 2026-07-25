@@ -176,6 +176,8 @@ export interface RiskKnowledgeBase {
   patterns: RiskPattern[];
 }
 
+export type RiskSource = 'HEURISTIC' | 'DETECTED';
+
 export interface RiskDto {
   id?: string;
   category: string;
@@ -184,6 +186,9 @@ export interface RiskDto {
   cwe?: string;
   severity: Severity;
   evidence: string;
+  source?: RiskSource;
+  url?: string;
+  remediation?: string;
 }
 
 export interface CreateScanDto {
@@ -228,6 +233,7 @@ export interface ScanStatsDto {
   endpoints: number;
   assets: number;
   risks: number;
+  vulnerabilities: number;
   riskScore: number;
   authPages: number;
   adminPages: number;

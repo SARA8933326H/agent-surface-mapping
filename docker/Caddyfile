@@ -1,0 +1,11 @@
+# HTTPS reverse proxy for production (see docker-compose.prod.yml).
+# Caddy obtains and renews Let's Encrypt certificates automatically.
+# DOMAIN and API_DOMAIN are substituted from the environment.
+
+{$DOMAIN} {
+	reverse_proxy frontend:3000
+}
+
+{$API_DOMAIN} {
+	reverse_proxy backend:3001
+}

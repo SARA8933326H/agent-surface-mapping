@@ -8,6 +8,7 @@ export function StatsCards({ stats }: { stats: ScanStatsDto }) {
     { label: 'Endpoints', value: stats.endpoints },
     { label: 'Assets', value: stats.assets },
     { label: 'Risks', value: stats.risks },
+    { label: 'Vulnerabilities', value: stats.vulnerabilities },
     { label: 'Risk Score', value: stats.riskScore },
   ];
 

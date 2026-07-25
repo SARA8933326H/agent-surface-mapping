@@ -11,6 +11,7 @@ import { ScanService } from './scan.service';
 import { GraphService } from '../graph/graph.service';
 import { RiskService } from '../risk/risk.service';
 import { TechService } from '../tech/tech.service';
+import { VulnService } from '../vuln/vuln.service';
 
 @Injectable()
 export class CrawlWorker implements OnModuleDestroy {
@@ -22,8 +23,9 @@ export class CrawlWorker implements OnModuleDestroy {
     private graphService: GraphService,
     private riskService: RiskService,
     private techService: TechService,
+    private vulnService: VulnService,
   ) {
-    this.redis = new Redis(Config.REDIS_URL);
+    this.redis = new Redis(Config.REDIS_URL, { maxRetriesPerRequest: null });
   }
 
   start(): void {
@@ -33,7 +35,7 @@ export class CrawlWorker implements OnModuleDestroy {
       async (job) => this.process(job),
       {
         connection: this.redis,
-        concurrency: 1,
+        concurrency: Config.WORKER_CONCURRENCY,
       },
     );
   }
@@ -73,6 +75,9 @@ export class CrawlWorker implements OnModuleDestroy {
       };
 
       let risks = this.riskService.matchKnownRisks(classifications);
+
+      const detected = await this.vulnService.runChecks(url, pages, result.forms, result.assets);
+      risks = [...risks, ...detected];
 
       if (!Config.DISABLE_LLM && Config.OLLAMA_HOST) {
         const llmRisks = await summarizeWithLLM(summary, {

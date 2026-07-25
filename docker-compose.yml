@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -11,11 +9,23 @@ services:
       - postgres-data:/var/lib/postgresql/data
     ports:
       - '5432:5432'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     ports:
       - '6379:6379'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
@@ -24,7 +34,10 @@ services:
     ports:
       - '3001:3001'
     environment:
+      NODE_ENV: production
       PORT: 3001
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/surface?schema=public
       REDIS_URL: redis://redis:6379
       SCREENSHOT_DIR: /app/screenshots
@@ -33,25 +46,40 @@ services:
       - screenshots:/app/screenshots
       - reports:/app/reports-output
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3001/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   worker:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
     command: ['pnpm', '--filter', '@surface/backend', 'worker']
+    deploy:
+      replicas: ${WORKER_REPLICAS:-2}
     environment:
+      NODE_ENV: production
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/surface?schema=public
       REDIS_URL: redis://redis:6379
       SCREENSHOT_DIR: /app/screenshots
       REPORT_DIR: /app/reports-output
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
     volumes:
       - screenshots:/app/screenshots
       - reports:/app/reports-output
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
   frontend:
     build:
@@ -60,9 +88,13 @@ services:
     ports:
       - '3000:3000'
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+# For production (HTTPS, managed PostgreSQL/Redis), use docker-compose.prod.yml instead.
 
 volumes:
   postgres-data:

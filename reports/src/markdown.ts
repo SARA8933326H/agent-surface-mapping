@@ -18,6 +18,7 @@ export function generateMarkdownReport(scan: ScanDetailsDto): string {
   sections.push(`- **Endpoints discovered:** ${scan.endpoints.length}`);
   sections.push(`- **Assets cataloged:** ${scan.assets.length}`);
   sections.push(`- **Risk findings:** ${scan.risks.length}`);
+  sections.push(`- **Detected vulnerabilities:** ${scan.risks.filter((r) => r.source === 'DETECTED').length}`);
   sections.push(`- **Technology stack:** ${(scan.techStack || []).join(', ') || 'Unknown'}`);
   sections.push('');
 
@@ -31,6 +32,23 @@ export function generateMarkdownReport(scan: ScanDetailsDto): string {
       sections.push(`- **CWE:** ${risk.cwe || 'N/A'}`);
       sections.push(`- **Description:** ${risk.description}`);
       sections.push(`- **Evidence:** ${risk.evidence}`);
+      sections.push('');
+    }
+  }
+
+  const vulnerabilities = scan.risks.filter((r) => r.source === 'DETECTED');
+  sections.push(`## Detected Vulnerabilities`);
+  if (vulnerabilities.length === 0) {
+    sections.push('No vulnerabilities were detected by the passive and active checks.');
+  } else {
+    for (const vuln of vulnerabilities) {
+      sections.push(`### ${vuln.category} (${vuln.severity})`);
+      sections.push(`- **Affected URL:** ${vuln.url || 'N/A'}`);
+      sections.push(`- **OWASP:** ${vuln.owasp || 'N/A'}`);
+      sections.push(`- **CWE:** ${vuln.cwe || 'N/A'}`);
+      sections.push(`- **Description:** ${vuln.description}`);
+      sections.push(`- **Evidence:** ${vuln.evidence}`);
+      sections.push(`- **Remediation:** ${vuln.remediation || 'N/A'}`);
       sections.push('');
     }
   }

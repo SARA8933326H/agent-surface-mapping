@@ -29,6 +29,7 @@ export function RisksTable({ risks }: { risks: RiskDto[] }) {
             <TableRow>
               <TableHead>Category</TableHead>
               <TableHead>Severity</TableHead>
+              <TableHead>Source</TableHead>
               <TableHead>OWASP</TableHead>
               <TableHead>CWE</TableHead>
               <TableHead>Description</TableHead>
@@ -41,6 +42,9 @@ export function RisksTable({ risks }: { risks: RiskDto[] }) {
                 <TableCell className="font-medium text-white">{risk.category}</TableCell>
                 <TableCell>
                   <Badge variant={severityVariant(risk.severity)}>{risk.severity}</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={risk.source === 'DETECTED' ? 'danger' : 'default'}>{risk.source || 'HEURISTIC'}</Badge>
                 </TableCell>
                 <TableCell>{risk.owasp || '-'}</TableCell>
                 <TableCell>{risk.cwe || '-'}</TableCell>

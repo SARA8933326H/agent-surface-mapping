@@ -134,9 +134,8 @@ export async function crawlWebsite(startUrl: string, options: CrawlOptions = {})
 
       let response = null;
       try {
-        response = await page.goto(normalized, { waitUntil: 'networkidle', timeout });
-        await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(500);
+        response = await page.goto(normalized, { waitUntil: 'domcontentloaded', timeout });
+        await page.waitForTimeout(1500); // allow SPA/JS to render
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         errors.push(`Navigation failed for ${normalized}: ${message}`);

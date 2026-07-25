@@ -15,10 +15,28 @@ export function buildReportHtml(scan: ScanDetailsDto): string {
     <tr>
       <td>${escapeHtml(r.category)}</td>
       <td style="color:${severityColor[r.severity] || '#94a3b8'}">${r.severity}</td>
+      <td>${r.source === 'DETECTED' ? 'Detected' : 'Heuristic'}</td>
       <td>${escapeHtml(r.owasp || 'N/A')}</td>
       <td>${escapeHtml(r.cwe || 'N/A')}</td>
       <td>${escapeHtml(r.description)}</td>
       <td>${escapeHtml(r.evidence)}</td>
+    </tr>
+  `,
+    )
+    .join('');
+
+  const vulns = scan.risks.filter((r) => r.source === 'DETECTED');
+  const vulnRows = vulns
+    .map(
+      (v) => `
+    <tr>
+      <td>${escapeHtml(v.category)}</td>
+      <td style="color:${severityColor[v.severity] || '#94a3b8'}">${v.severity}</td>
+      <td>${escapeHtml(v.url || '-')}</td>
+      <td>${escapeHtml(v.owasp || 'N/A')}</td>
+      <td>${escapeHtml(v.cwe || 'N/A')}</td>
+      <td>${escapeHtml(v.evidence)}</td>
+      <td>${escapeHtml(v.remediation || '-')}</td>
     </tr>
   `,
     )
@@ -69,12 +87,19 @@ export function buildReportHtml(scan: ScanDetailsDto): string {
     <div class="card"><div class="value">${scan.forms.length}</div><div class="label">Forms</div></div>
     <div class="card"><div class="value">${scan.endpoints.length}</div><div class="label">Endpoints</div></div>
     <div class="card"><div class="value">${scan.assets.length}</div><div class="label">Assets</div></div>
+    <div class="card"><div class="value">${vulns.length}</div><div class="label">Vulnerabilities</div></div>
   </div>
+
+  <h2>Detected Vulnerabilities</h2>
+  <table>
+    <thead><tr><th>Vulnerability</th><th>Severity</th><th>Affected URL</th><th>OWASP</th><th>CWE</th><th>Evidence</th><th>Remediation</th></tr></thead>
+    <tbody>${vulnRows || '<tr><td colspan="7">No vulnerabilities detected.</td></tr>'}</tbody>
+  </table>
 
   <h2>Risk Findings</h2>
   <table>
-    <thead><tr><th>Category</th><th>Severity</th><th>OWASP</th><th>CWE</th><th>Description</th><th>Evidence</th></tr></thead>
-    <tbody>${riskRows || '<tr><td colspan="6">No risks mapped.</td></tr>'}</tbody>
+    <thead><tr><th>Category</th><th>Severity</th><th>Source</th><th>OWASP</th><th>CWE</th><th>Description</th><th>Evidence</th></tr></thead>
+    <tbody>${riskRows || '<tr><td colspan="7">No risks mapped.</td></tr>'}</tbody>
   </table>
 
   <h2>Pages</h2>

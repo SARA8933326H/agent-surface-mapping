@@ -12,10 +12,18 @@ export class CrawlQueueService implements OnModuleDestroy {
   private redis: Redis;
 
   constructor() {
-    this.redis = new Redis(Config.REDIS_URL);
+    this.redis = new Redis(Config.REDIS_URL, { maxRetriesPerRequest: null });
     this.queue = new Queue<QueueJobData>(CRAWL_QUEUE_NAME, {
       connection: this.redis,
-      defaultJobOptions: { removeOnComplete: 10, removeOnFail: 10 },
+      defaultJobOptions: {
+        removeOnComplete: 10,
+        removeOnFail: 10,
+        attempts: Config.QUEUE_ATTEMPTS,
+        backoff: {
+          type: 'exponential',
+          delay: Config.QUEUE_BACKOFF_DELAY,
+        },
+      },
     });
   }
 

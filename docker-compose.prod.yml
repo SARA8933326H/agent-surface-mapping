@@ -1,0 +1,103 @@
+# Production compose: HTTPS via Caddy, managed PostgreSQL/Redis.
+#
+# Required environment variables (e.g. in a .env file next to this file):
+#   DATABASE_URL        managed PostgreSQL connection string
+#   REDIS_URL           managed Redis connection string
+#   DOMAIN              public domain for the dashboard, e.g. surface.example.com
+#   API_DOMAIN          public domain for the API, e.g. api.surface.example.com
+#   CORS_ORIGIN         allowed origins, e.g. https://surface.example.com
+#
+# Optional:
+#   WORKER_REPLICAS     worker container count (default 2)
+#   WORKER_CONCURRENCY  concurrent crawl jobs per worker (default 2)
+#
+# Run:
+#   docker compose -f docker-compose.prod.yml up --build -d
+# Scale workers later without downtime:
+#   docker compose -f docker-compose.prod.yml up -d --scale worker=4
+#
+# DNS A/AAAA records for DOMAIN and API_DOMAIN must point at this host so
+# Caddy can issue Let's Encrypt certificates (ports 80 and 443 reachable).
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN}
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      CORS_ORIGIN: ${CORS_ORIGIN:?set CORS_ORIGIN}
+      TRUST_PROXY: 'true'
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:?set REDIS_URL}
+      SCREENSHOT_DIR: /app/screenshots
+      REPORT_DIR: /app/reports-output
+    volumes:
+      - screenshots:/app/screenshots
+      - reports:/app/reports-output
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:3001/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    command: ['pnpm', '--filter', '@surface/backend', 'worker']
+    deploy:
+      replicas: ${WORKER_REPLICAS:-2}
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:?set REDIS_URL}
+      SCREENSHOT_DIR: /app/screenshots
+      REPORT_DIR: /app/reports-output
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+    volumes:
+      - screenshots:/app/screenshots
+      - reports:/app/reports-output
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        # Inlined into the client bundle at build time.
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN:?set API_DOMAIN}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  screenshots:
+  reports:
+  caddy-data:
+  caddy-config:

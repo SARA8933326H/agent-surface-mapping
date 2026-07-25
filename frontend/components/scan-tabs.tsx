@@ -9,6 +9,7 @@ import { FormsTable } from '@/components/forms-table';
 import { ApisTable } from '@/components/apis-table';
 import { AssetsTable } from '@/components/assets-table';
 import { RisksTable } from '@/components/risks-table';
+import { VulnsTable } from '@/components/vulns-table';
 import { Screenshots } from '@/components/screenshots';
 import { ReportsList } from '@/components/reports-list';
 import { ScanStatusBadge } from '@/components/scan-status-badge';
@@ -23,6 +24,7 @@ export function ScanTabs({ scan, stats }: { scan: ScanDetailsDto; stats: ScanSta
         <TabsTrigger value="apis">APIs</TabsTrigger>
         <TabsTrigger value="assets">Assets</TabsTrigger>
         <TabsTrigger value="risks">Risks</TabsTrigger>
+        <TabsTrigger value="vulnerabilities">Vulnerabilities</TabsTrigger>
         <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
         <TabsTrigger value="reports">Reports</TabsTrigger>
       </TabsList>
@@ -63,6 +65,10 @@ export function ScanTabs({ scan, stats }: { scan: ScanDetailsDto; stats: ScanSta
 
       <TabsContent value="risks">
         <RisksTable risks={scan.risks} />
+      </TabsContent>
+
+      <TabsContent value="vulnerabilities">
+        <VulnsTable vulns={scan.risks.filter((r) => r.source === 'DETECTED')} />
       </TabsContent>
 
       <TabsContent value="screenshots">

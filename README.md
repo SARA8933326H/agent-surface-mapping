@@ -1,8 +1,8 @@
 # Attack Surface Discovery Prototype
 
-A free, open-source attack surface discovery prototype that crawls an authorized website, extracts pages, forms, endpoints, and assets, classifies functionality with heuristics and an optional local LLM, and maps findings to OWASP Top 10 / CWE risks. The result is a polished, interactive dashboard with an attack-surface graph, downloadable reports, and technology stack detection.
+A free, open-source attack surface discovery prototype that crawls an authorized website, extracts pages, forms, endpoints, and assets, classifies functionality with heuristics and an optional local LLM, and maps findings to OWASP Top 10 / CWE risks. It also detects common vulnerabilities — missing security headers, insecure cookies, exposed sensitive files, CORS misconfigurations, outdated JavaScript libraries, and more — using passive analysis of crawled data plus a small set of safe, read-only HTTP probes. The result is a polished, interactive dashboard with an attack-surface graph, downloadable reports, and technology stack detection.
 
-**Important:** This is a discovery and mapping tool only. It does not generate exploit payloads, attempt bypasses, brute force, SQL injection, or any attacks.
+**Important:** This tool never generates exploit payloads, attempts bypasses, brute forces, injects SQL, or fuzzes inputs. Vulnerability checks are passive or use bounded, read-only requests (GET/OPTIONS/TRACE) against the target origin. Only scan systems you are authorized to test.
 
 ## Architecture
 
@@ -85,7 +85,40 @@ This starts PostgreSQL, Redis, backend API, worker, and frontend on:
 
 - Frontend: [http://localhost:3000](http://localhost:3000)
 - Backend API: [http://localhost:3001](http://localhost:3001)
-- API docs: [http://localhost:3001/api/docs](http://localhost:3001/api/docs)
+- API docs: [http://localhost:3001/api/docs](http://localhost:3001/api/docs) (disabled when `NODE_ENV=production`)
+
+## Production (HTTPS + Managed Postgres/Redis)
+
+Use `docker-compose.prod.yml`. It drops the local postgres/redis containers, requires
+`DATABASE_URL`/`REDIS_URL` for your managed services, and puts a Caddy reverse proxy in
+front that terminates HTTPS with automatic Let's Encrypt certificates. Migrations run via
+`prisma migrate deploy` on backend startup — `migrate dev` is never used against production.
+
+```bash
+# .env next to docker-compose.prod.yml:
+#   DATABASE_URL=postgresql://user:pass@your-managed-pg:5432/surface
+#   REDIS_URL=rediss://your-managed-redis:6379
+#   DOMAIN=surface.example.com
+#   API_DOMAIN=api.surface.example.com
+#   CORS_ORIGIN=https://surface.example.com
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+DNS for both `DOMAIN` and `API_DOMAIN` must resolve to the host with ports 80/443 open so
+Caddy can issue certificates. Set `TRUST_PROXY=true` (already set in the prod compose) so
+rate limiting keys on the real client IP.
+
+## Scaling Workers
+
+Workers are stateless and scale horizontally; crawl jobs retry with exponential backoff
+(`QUEUE_ATTEMPTS`, `QUEUE_BACKOFF_DELAY`) and each worker runs `WORKER_CONCURRENCY`
+concurrent jobs (default 2).
+
+```bash
+docker compose up -d --scale worker=4
+```
+
+or set `WORKER_REPLICAS` (default 2) in either compose file.
 
 ## How It Works
 
@@ -94,9 +127,10 @@ This starts PostgreSQL, Redis, backend API, worker, and frontend on:
 3. The worker launches Playwright, explores the application, and extracts pages, forms, endpoints, assets, cookies, headers, and screenshots.
 4. Heuristic classification identifies auth, admin, dashboard, search, CRUD, upload, download, API, GraphQL, and hidden pages.
 5. A local JSON knowledge base maps each discovered functionality to OWASP Top 10 and CWE risks.
-6. An optional local LLM can summarize existing findings against the same knowledge base; it never invents new vulnerabilities.
-7. The backend builds an internal graph of nodes (pages, forms, endpoints, scripts, auth, admin, objects) and edges (navigation, API calls, form actions, imports, relationships).
-8. The frontend displays the interactive graph, tables, stats, risks, screenshots, and reports.
+6. Vulnerability detection runs passive checks on the crawled data (security headers, version disclosure, mixed content, outdated libraries, form weaknesses) and optional read-only probes (sensitive paths, HTTP methods, CORS, cookie flags, HTTPS enforcement), producing evidence-backed findings with remediation guidance.
+7. An optional local LLM can summarize existing findings against the same knowledge base; it never invents new vulnerabilities.
+8. The backend builds an internal graph of nodes (pages, forms, endpoints, scripts, auth, admin, objects) and edges (navigation, API calls, form actions, imports, relationships).
+9. The frontend displays the interactive graph, tables, stats, risks, detected vulnerabilities, screenshots, and reports.
 
 ## API Endpoints
 

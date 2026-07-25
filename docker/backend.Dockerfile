@@ -26,4 +26,4 @@ RUN pnpm --filter @surface/shared build && \
 EXPOSE 3001
 
 WORKDIR /app/backend
-CMD ["pnpm", "start:prod"]
+CMD ["sh", "-c", "pnpm db:deploy && pnpm start:prod"]

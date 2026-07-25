@@ -6,10 +6,11 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { QueueModule } from '../queue/queue.module';
 import { GraphModule } from '../graph/graph.module';
 import { RiskModule } from '../risk/risk.module';
+import { VulnModule } from '../vuln/vuln.module';
 import { TechService } from '../tech/tech.service';
 
 @Module({
-  imports: [PrismaModule, QueueModule, GraphModule, RiskModule],
+  imports: [PrismaModule, QueueModule, GraphModule, RiskModule, VulnModule],
   controllers: [ScanController],
   providers: [ScanService, CrawlWorker, TechService],
   exports: [ScanService, CrawlWorker],

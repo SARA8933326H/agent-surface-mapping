@@ -168,6 +168,9 @@ export class ScanService {
             cwe: risk.cwe,
             severity: risk.severity,
             evidence: risk.evidence,
+            source: risk.source || 'HEURISTIC',
+            url: risk.url,
+            remediation: risk.remediation,
           },
         });
       }
@@ -235,6 +238,7 @@ export class ScanService {
       endpoints: scan.endpoints.length,
       assets: scan.assets.length,
       risks: scan.risks.length,
+      vulnerabilities: scan.risks.filter((r) => r.source === 'DETECTED').length,
       riskScore,
       authPages,
       adminPages,
@@ -296,6 +300,9 @@ export class ScanService {
         cwe: r.cwe,
         severity: r.severity,
         evidence: r.evidence,
+        source: r.source || 'HEURISTIC',
+        url: r.url || undefined,
+        remediation: r.remediation || undefined,
       })),
       reports: scan.reports.map((r: any) => ({
         id: r.id,
