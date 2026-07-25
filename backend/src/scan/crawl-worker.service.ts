@@ -102,7 +102,14 @@ export class CrawlWorker implements OnModuleDestroy {
         durationMs: Date.now() - start,
       });
     } catch (error) {
-      await this.scanService.fail(scanId, error instanceof Error ? error.message : String(error));
+      const message = error instanceof Error ? error.message : String(error);
+      const attempts = job.opts.attempts ?? 1;
+      if (job.attemptsMade + 1 < attempts) {
+        // Let BullMQ retry with backoff; the scan stays RUNNING until the
+        // final attempt fails.
+        throw error instanceof Error ? error : new Error(message);
+      }
+      await this.scanService.fail(scanId, message);
     }
   }
 

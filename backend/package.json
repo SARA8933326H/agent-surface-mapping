@@ -9,7 +9,7 @@
     "start:prod": "node scripts/run-node.js dist/main",
     "worker": "node scripts/run-node.js dist/worker",
     "db:generate": "node scripts/run-prisma.js generate",
-    "db:migrate": "node scripts/run-prisma.js migrate dev --name init",
+    "db:migrate": "node scripts/run-prisma.js migrate dev",
     "db:deploy": "node scripts/run-prisma.js migrate deploy",
     "typecheck": "tsc --noEmit"
   },

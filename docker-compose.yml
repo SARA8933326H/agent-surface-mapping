@@ -85,10 +85,12 @@ services:
     build:
       context: .
       dockerfile: docker/frontend.Dockerfile
+      args:
+        # Inlined into the client bundle at build time; setting this as a
+        # runtime env var has no effect.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
     ports:
       - '3000:3000'
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
     depends_on:
       backend:
         condition: service_healthy
