@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          # Browsers are only needed at crawl time, not for build/tests.
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Build packages
+        run: |
+          pnpm --filter @surface/shared build
+          pnpm --filter @surface/crawler build
+          pnpm --filter @surface/classifier build
+          pnpm --filter @surface/reports build
+          pnpm --filter @surface/backend db:generate
+          pnpm --filter @surface/backend build
+
+      - name: Typecheck backend
+        run: pnpm --filter @surface/backend typecheck
+
+      - name: Test backend
+        run: pnpm --filter @surface/backend test
+
+      - name: Build frontend
+        run: pnpm --filter @surface/frontend build
