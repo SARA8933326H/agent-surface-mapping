@@ -134,6 +134,17 @@ docker compose up -d --scale worker=4
 
 or set `WORKER_REPLICAS` (default 2) in either compose file.
 
+## Tests & CI
+
+```bash
+pnpm test   # backend Jest suite: unit tests for vulnerability checks and the
+            # SSRF target validator, plus an integration test that runs the
+            # active probes against live fixture servers
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) builds all packages, typechecks, runs the
+test suite, and builds the frontend on every push to `master`/`dev` and every PR to `master`.
+
 ## How It Works
 
 1. User enters an authorized URL.
