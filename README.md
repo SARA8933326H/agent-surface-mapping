@@ -108,6 +108,20 @@ DNS for both `DOMAIN` and `API_DOMAIN` must resolve to the host with ports 80/44
 Caddy can issue certificates. Set `TRUST_PROXY=true` (already set in the prod compose) so
 rate limiting keys on the real client IP.
 
+## API Security
+
+- **API key:** set `API_KEY` on the backend (required in the prod compose) and every request
+  must send it via the `X-API-Key` header (or `?key=` for download links). The frontend sends
+  it automatically when built with `NEXT_PUBLIC_API_KEY`. It is a shared deployment key —
+  anyone who can open the dashboard can see it, so treat dashboard access as the trust
+  boundary. When `API_KEY` is unset (local dev default), auth is disabled. `/health` is
+  always public.
+- **SSRF protection:** by default the API refuses scan targets that are private, loopback,
+  link-local, or reserved IPs — including targets whose DNS resolves to one (this blocks
+  cloud metadata endpoints like `169.254.169.254`). Set `ALLOW_PRIVATE_TARGETS=true` only
+  for local development. Note: validation happens at scan creation; a DNS-rebinding attack
+  that changes records mid-crawl is out of scope.
+
 ## Scaling Workers
 
 Workers are stateless and scale horizontally; crawl jobs retry with exponential backoff

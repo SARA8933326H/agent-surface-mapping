@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ApiKeyGuard } from './auth/api-key.guard';
 import { ScanModule } from './scan/scan.module';
 import { ReportModule } from './report/report.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -22,7 +23,10 @@ import { Config } from './config';
     ]),
   ],
   controllers: [HealthController],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: ApiKeyGuard },
+  ],
 })
 export class AppModule {}
 
