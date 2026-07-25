@@ -18,4 +18,10 @@ export const Config = {
   VULN_CHECKS_ENABLED: process.env.VULN_CHECKS_ENABLED !== 'false',
   VULN_ACTIVE_PROBES: process.env.VULN_ACTIVE_PROBES !== 'false',
   VULN_PROBE_TIMEOUT: parseInt(process.env.VULN_PROBE_TIMEOUT || '5000', 10),
+  // When set, every API request (except /health) must present this key via
+  // the X-API-Key header or ?key= query param. Unset = auth disabled (dev).
+  API_KEY: process.env.API_KEY,
+  // Allow scans against private/loopback/link-local targets (SSRF risk).
+  // Intended for local development only; leave unset in production.
+  ALLOW_PRIVATE_TARGETS: process.env.ALLOW_PRIVATE_TARGETS === 'true',
 };

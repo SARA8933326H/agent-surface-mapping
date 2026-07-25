@@ -3,6 +3,7 @@
 # Required environment variables (e.g. in a .env file next to this file):
 #   DATABASE_URL        managed PostgreSQL connection string
 #   REDIS_URL           managed Redis connection string
+#   API_KEY             shared secret required on every API request (X-API-Key header)
 #   DOMAIN              public domain for the dashboard, e.g. surface.example.com
 #   API_DOMAIN          public domain for the API, e.g. api.surface.example.com
 #   CORS_ORIGIN         allowed origins, e.g. https://surface.example.com
@@ -46,6 +47,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
+      API_KEY: ${API_KEY:?set API_KEY}
       CORS_ORIGIN: ${CORS_ORIGIN:?set CORS_ORIGIN}
       TRUST_PROXY: 'true'
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
@@ -91,6 +93,9 @@ services:
       args:
         # Inlined into the client bundle at build time.
         NEXT_PUBLIC_API_URL: https://${API_DOMAIN:?set API_DOMAIN}
+        # Same shared key as the backend; visible to anyone who can open
+        # the dashboard, which is the intended access-control boundary.
+        NEXT_PUBLIC_API_KEY: ${API_KEY:?set API_KEY}
     depends_on:
       backend:
         condition: service_healthy

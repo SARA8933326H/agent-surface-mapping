@@ -15,6 +15,8 @@ import {
 } from '@surface/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { CrawlQueueService } from '../queue/crawl-queue.service';
+import { Config } from '../config';
+import { assertPublicTarget } from './target-validator';
 
 export interface CompleteScanData {
   pages: PageExtract[];
@@ -37,6 +39,9 @@ export class ScanService {
   ) {}
 
   async create(dto: CreateScanDto): Promise<ScanDto> {
+    if (!Config.ALLOW_PRIVATE_TARGETS) {
+      await assertPublicTarget(dto.url);
+    }
     const scan = await this.prisma.scan.create({
       data: {
         url: dto.url,

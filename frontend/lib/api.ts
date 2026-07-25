@@ -1,11 +1,16 @@
 import { CreateScanDto, ReportDto, ScanDetailsDto, ScanDto, ScanStatsDto } from '@surface/shared';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
+
+function authHeaders(): Record<string, string> {
+  return API_KEY ? { 'X-API-Key': API_KEY } : {};
+}
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(), ...(init?.headers || {}) },
   });
   if (!res.ok) {
     const body = await res.text();
@@ -38,5 +43,6 @@ export async function generateReport(scanId: string, format: 'PDF' | 'MARKDOWN' 
 }
 
 export function reportDownloadUrl(reportId: string): string {
-  return `${API_URL}/reports/${reportId}/download`;
+  const key = API_KEY ? `?key=${encodeURIComponent(API_KEY)}` : '';
+  return `${API_URL}/reports/${reportId}/download${key}`;
 }
