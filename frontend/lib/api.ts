@@ -38,6 +38,10 @@ export async function createScan(dto: CreateScanDto): Promise<ScanDto> {
   });
 }
 
+export async function cancelScan(id: string): Promise<ScanDto> {
+  return fetchJson(`/scans/${id}/cancel`, { method: 'POST' });
+}
+
 export async function generateReport(scanId: string, format: 'PDF' | 'MARKDOWN' | 'JSON'): Promise<ReportDto> {
   return fetchJson<ReportDto>(`/reports/scans/${scanId}/${format.toLowerCase()}`, { method: 'POST' });
 }

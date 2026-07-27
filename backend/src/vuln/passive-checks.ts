@@ -79,36 +79,37 @@ const SECURITY_HEADERS: {
 
 export function checkSecurityHeaders(pages: PageExtract[]): RiskDto[] {
   const findings: RiskDto[] = [];
-  const seen = new Set<string>();
+  const eligible = pages.filter((p) => !(p.statusCode && p.statusCode >= 400));
 
-  for (const page of pages) {
-    if (page.statusCode && page.statusCode >= 400) continue;
-    const isHttps = page.url.startsWith('https://');
-    const csp = headerValue(page.headers, 'content-security-policy');
+  // Group by header: one finding per missing header, listing affected pages,
+  // instead of one finding per page.
+  for (const h of SECURITY_HEADERS) {
+    const missingOn: string[] = [];
 
-    for (const h of SECURITY_HEADERS) {
+    for (const page of eligible) {
+      const isHttps = page.url.startsWith('https://');
       if (h.httpsOnly && !isHttps) continue;
       let present = headerValue(page.headers, h.name) !== undefined;
       if (!present && h.alternative === 'frame-ancestors') {
+        const csp = headerValue(page.headers, 'content-security-policy');
         present = !!csp && /frame-ancestors/i.test(csp);
       }
-      if (present) continue;
-      const key = `${h.category}|${page.url}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      findings.push(
-        finding({
-          category: h.category,
-          severity: h.severity,
-          owasp: h.owasp,
-          cwe: h.cwe,
-          description: h.description,
-          evidence: `Response for ${page.url} does not include the ${h.name} header.`,
-          url: page.url,
-          remediation: h.remediation,
-        }),
-      );
+      if (!present) missingOn.push(page.url);
     }
+
+    if (missingOn.length === 0) continue;
+    findings.push(
+      finding({
+        category: h.category,
+        severity: h.severity,
+        owasp: h.owasp,
+        cwe: h.cwe,
+        description: h.description,
+        evidence: `Missing on ${missingOn.length} page(s): ${missingOn.slice(0, 3).join(', ')}${missingOn.length > 3 ? `, and ${missingOn.length - 3} more` : ''}`,
+        url: missingOn[0],
+        remediation: h.remediation,
+      }),
+    );
   }
   return findings;
 }

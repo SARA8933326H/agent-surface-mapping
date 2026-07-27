@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import {
   AssetExtract,
   CreateScanDto,
@@ -81,6 +81,36 @@ export class ScanService {
       where: { id },
       data: { status: ScanStatus.RUNNING, progress: 10, updatedAt: new Date() },
     });
+  }
+
+  async updateProgress(id: string, progress: number): Promise<void> {
+    await this.prisma.scan.updateMany({
+      where: { id, status: ScanStatus.RUNNING },
+      data: { progress, updatedAt: new Date() },
+    });
+  }
+
+  async getStatus(id: string): Promise<ScanStatus | null> {
+    const scan = await this.prisma.scan.findUnique({ where: { id }, select: { status: true } });
+    return (scan?.status as ScanStatus) ?? null;
+  }
+
+  async cancel(id: string): Promise<ScanDto> {
+    const scan = await this.prisma.scan.findUnique({ where: { id } });
+    if (!scan) throw new NotFoundException(`Scan ${id} not found`);
+    if (scan.status !== ScanStatus.PENDING && scan.status !== ScanStatus.RUNNING) {
+      throw new BadRequestException(`Scan is ${scan.status} and cannot be cancelled`);
+    }
+
+    // Remove the queued job if it hasn't started; a running crawl notices the
+    // CANCELLED status via its shouldAbort hook and stops after the current page.
+    await this.queue.remove(id);
+
+    const updated = await this.prisma.scan.update({
+      where: { id },
+      data: { status: ScanStatus.CANCELLED, errors: ['Cancelled by user'], updatedAt: new Date() },
+    });
+    return this.toScanDto(updated);
   }
 
   async complete(id: string, data: CompleteScanData): Promise<void> {

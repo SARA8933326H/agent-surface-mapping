@@ -28,7 +28,23 @@ export class CrawlQueueService implements OnModuleDestroy {
   }
 
   async add(data: QueueJobData): Promise<Job<QueueJobData>> {
-    return this.queue.add(`crawl-${data.scanId}`, data);
+    // jobId = scanId: prevents duplicate queued jobs for one scan and lets
+    // cancel() look the job up directly.
+    return this.queue.add(`crawl-${data.scanId}`, data, { jobId: data.scanId });
+  }
+
+  /**
+   * Removes a queued (not yet running) job. Returns the job state before
+   * removal, or null if no job exists for the scan.
+   */
+  async remove(scanId: string): Promise<string | null> {
+    const job = await this.queue.getJob(scanId);
+    if (!job) return null;
+    const state = await job.getState();
+    if (state === 'waiting' || state === 'delayed' || state === 'prioritized') {
+      await job.remove();
+    }
+    return state;
   }
 
   async onModuleDestroy() {

@@ -71,6 +71,21 @@ describe('checkSecurityHeaders', () => {
     const findings = checkSecurityHeaders([makePage({ statusCode: 404 })]);
     expect(findings).toHaveLength(0);
   });
+
+  it('groups repeated missing headers across pages into one finding', () => {
+    const pages = [
+      makePage({ url: 'https://example.com/' }),
+      makePage({ url: 'https://example.com/login' }),
+      makePage({ url: 'https://example.com/dashboard' }),
+    ];
+    const findings = checkSecurityHeaders(pages);
+    // 5 headers x 1 grouped finding each, not 5 per page
+    expect(findings).toHaveLength(5);
+    const csp = findings.find((f) => f.category === 'Missing Content-Security-Policy');
+    expect(csp!.evidence).toContain('3 page(s)');
+    expect(csp!.evidence).toContain('https://example.com/login');
+    expect(csp!.url).toBe('https://example.com/');
+  });
 });
 
 describe('checkVersionDisclosure', () => {
