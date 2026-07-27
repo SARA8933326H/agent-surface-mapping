@@ -7,6 +7,7 @@ export function ScanStatusBadge({ status }: { status: ScanStatus }) {
     [ScanStatus.RUNNING]: 'info',
     [ScanStatus.COMPLETED]: 'success',
     [ScanStatus.FAILED]: 'danger',
+    [ScanStatus.CANCELLED]: 'default',
   };
   return <Badge variant={variants[status]}>{status}</Badge>;
 }

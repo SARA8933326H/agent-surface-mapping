@@ -4,7 +4,7 @@ import { Redis } from 'ioredis';
 import { basename } from 'path';
 import { crawlWebsite } from '@surface/crawler';
 import { buildClassifications, uniqueFunctionalities, summarizeWithLLM } from '@surface/classifier';
-import { QueueJobData, PageExtract } from '@surface/shared';
+import { QueueJobData, PageExtract, ScanStatus } from '@surface/shared';
 import { Config } from '../config';
 import { CRAWL_QUEUE_NAME } from '../queue/crawl-queue.service';
 import { ScanService } from './scan.service';
@@ -17,6 +17,8 @@ import { VulnService } from '../vuln/vuln.service';
 export class CrawlWorker implements OnModuleDestroy {
   private worker?: Worker<QueueJobData>;
   private redis: Redis;
+  private lastCancelCheck = 0;
+  private lastCancelResult = false;
 
   constructor(
     private scanService: ScanService,
@@ -40,16 +42,38 @@ export class CrawlWorker implements OnModuleDestroy {
     );
   }
 
+  /** Throttled DB check so the crawler doesn't hammer Postgres on every page. */
+  private async isCancelled(scanId: string): Promise<boolean> {
+    const now = Date.now();
+    if (now - this.lastCancelCheck < 1000) return this.lastCancelResult;
+    this.lastCancelCheck = now;
+    this.lastCancelResult = (await this.scanService.getStatus(scanId)) === ScanStatus.CANCELLED;
+    return this.lastCancelResult;
+  }
+
   async process(job: Job<QueueJobData>): Promise<void> {
     const { scanId, url, options } = job.data;
     await this.scanService.startProcessing(scanId);
     const start = Date.now();
 
     try {
-      const result = await crawlWebsite(url, {
-        ...options,
-        screenshotDir: Config.SCREENSHOT_DIR,
-      });
+      const result = await crawlWebsite(
+        url,
+        {
+          ...options,
+          screenshotDir: Config.SCREENSHOT_DIR,
+        },
+        {
+          onProgress: async (crawled, maxPages) => {
+            const progress = 10 + Math.min(80, Math.round((crawled / maxPages) * 80));
+            await this.scanService.updateProgress(scanId, progress);
+          },
+          shouldAbort: () => this.isCancelled(scanId),
+        },
+      );
+
+      // A cancelled scan must not be completed with partial results.
+      if ((await this.scanService.getStatus(scanId)) === ScanStatus.CANCELLED) return;
 
       const pages: PageExtract[] = result.pages.map((p) => ({
         ...p,
@@ -102,6 +126,7 @@ export class CrawlWorker implements OnModuleDestroy {
         durationMs: Date.now() - start,
       });
     } catch (error) {
+      if ((await this.scanService.getStatus(scanId)) === ScanStatus.CANCELLED) return;
       const message = error instanceof Error ? error.message : String(error);
       const attempts = job.opts.attempts ?? 1;
       if (job.attemptsMade + 1 < attempts) {

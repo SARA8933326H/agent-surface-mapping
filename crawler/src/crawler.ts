@@ -2,6 +2,7 @@ import { chromium, Browser, BrowserContext } from 'playwright';
 import { mkdir } from 'fs/promises';
 import { join } from 'path';
 import {
+  CrawlHooks,
   CrawlOptions,
   CrawlResult,
   EndpointExtract,
@@ -32,7 +33,11 @@ import {
   sameOrigin,
 } from './utils';
 
-export async function crawlWebsite(startUrl: string, options: CrawlOptions = {}): Promise<CrawlResult> {
+export async function crawlWebsite(
+  startUrl: string,
+  options: CrawlOptions = {},
+  hooks: CrawlHooks = {},
+): Promise<CrawlResult> {
   const start = Date.now();
   const startUri = new URL(startUrl);
   const origin = startUri.origin;
@@ -74,6 +79,7 @@ export async function crawlWebsite(startUrl: string, options: CrawlOptions = {})
   const allAssets: { url: string; type: import('@surface/shared').AssetType; discoveredFrom?: string }[] = [];
   const discoveredUrls = new Set<string>();
   const errors: string[] = [];
+  let cancelled = false;
 
   const queue: { url: string; depth: number; parentUrl?: string }[] = [
     { url: normalizeUrl(startUrl), depth: 0 },
@@ -85,6 +91,12 @@ export async function crawlWebsite(startUrl: string, options: CrawlOptions = {})
 
   try {
     while (queue.length > 0 && pages.length < maxPages) {
+      if (hooks.shouldAbort && (await hooks.shouldAbort())) {
+        cancelled = true;
+        errors.push('Scan cancelled by user');
+        break;
+      }
+
       const { url, depth, parentUrl } = queue.shift()!;
       const normalized = normalizeUrl(url);
 
@@ -178,6 +190,7 @@ export async function crawlWebsite(startUrl: string, options: CrawlOptions = {})
       pages.push(pageExtract);
       allEndpoints.push(...pageExtract.endpoints);
       allAssets.push(...pageExtract.assets);
+      await hooks.onProgress?.(pages.length, maxPages);
 
       for (const link of pageExtract.extractedLinks) {
         try {

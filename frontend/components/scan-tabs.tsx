@@ -40,6 +40,17 @@ export function ScanTabs({ scan, stats }: { scan: ScanDetailsDto; stats: ScanSta
             </div>
             <ScanStatusBadge status={scan.status} />
           </div>
+          {(scan.status === 'PENDING' || scan.status === 'RUNNING') && (
+            <div className="mt-4">
+              <div className="h-2 w-full rounded-full bg-surface-elevated">
+                <div
+                  className="h-2 rounded-full bg-primary transition-all"
+                  style={{ width: `${scan.progress}%` }}
+                />
+              </div>
+              <p className="mt-1 text-xs text-muted">{scan.progress}%</p>
+            </div>
+          )}
         </div>
         <div className="mb-6">
           <StatsCards stats={stats} />

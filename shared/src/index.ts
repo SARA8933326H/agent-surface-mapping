@@ -3,6 +3,7 @@ export enum ScanStatus {
   RUNNING = 'RUNNING',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
 }
 
 export enum EndpointType {
@@ -70,6 +71,17 @@ export interface CrawlOptions {
   screenshotDir?: string;
   browserHeadless?: boolean;
   browserTimeout?: number;
+}
+
+/**
+ * Runtime hooks for the crawler. These are NOT part of CrawlOptions because
+ * options are serialized into the job queue; hooks are wired by the worker.
+ */
+export interface CrawlHooks {
+  /** Called after each page is fully processed. */
+  onProgress?: (pagesCrawled: number, maxPages: number) => void | Promise<void>;
+  /** Return true to stop the crawl gracefully (partial results are returned). */
+  shouldAbort?: () => boolean | Promise<boolean>;
 }
 
 export interface FieldExtract {

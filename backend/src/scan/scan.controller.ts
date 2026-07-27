@@ -28,4 +28,9 @@ export class ScanController {
   async stats(@Param('id') id: string) {
     return this.scanService.getStats(id);
   }
+
+  @Post(':id/cancel')
+  async cancel(@Param('id') id: string) {
+    return this.scanService.cancel(id);
+  }
 }
