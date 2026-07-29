@@ -55,6 +55,9 @@ export class CrawlWorker implements OnModuleDestroy {
     const { scanId, url, options } = job.data;
     await this.scanService.startProcessing(scanId);
     const start = Date.now();
+    const maxDurationMin = options?.maxDurationMin ?? Config.SCAN_MAX_DURATION_MIN;
+    const deadlineMs = start + maxDurationMin * 60_000;
+    let timedOut = false;
 
     try {
       const result = await crawlWebsite(
@@ -68,11 +71,21 @@ export class CrawlWorker implements OnModuleDestroy {
             const progress = 10 + Math.min(80, Math.round((crawled / maxPages) * 80));
             await this.scanService.updateProgress(scanId, progress);
           },
-          shouldAbort: () => this.isCancelled(scanId),
+          shouldAbort: async () => {
+            if (await this.isCancelled(scanId)) return true;
+            if (Date.now() > deadlineMs) {
+              timedOut = true;
+              return true;
+            }
+            return false;
+          },
         },
       );
 
-      // A cancelled scan must not be completed with partial results.
+      // A cancelled or timed-out scan must not be completed with partial results.
+      if (timedOut) {
+        throw new Error(`Scan exceeded maximum allowed duration of ${maxDurationMin} minute(s)`);
+      }
       if ((await this.scanService.getStatus(scanId)) === ScanStatus.CANCELLED) return;
 
       const pages: PageExtract[] = result.pages.map((p) => ({

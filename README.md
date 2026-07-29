@@ -131,8 +131,10 @@ rate limiting keys on the real client IP.
 
 Workers are stateless and scale horizontally; crawl jobs retry with exponential backoff
 (`QUEUE_ATTEMPTS`, `QUEUE_BACKOFF_DELAY`) and each worker runs `WORKER_CONCURRENCY`
-concurrent jobs (default 2). Enable `CLEANUP_ENABLED=true` on a single worker to delete
-scans, screenshots, and reports older than `CLEANUP_MAX_AGE_DAYS` (default 30) automatically.
+concurrent jobs (default 2). A per-scan `maxDurationMin` option (and the global
+`SCAN_MAX_DURATION_MIN` default) aborts runaway crawls and marks them FAILED.
+Enable `CLEANUP_ENABLED=true` on a single worker to delete scans, screenshots, and
+reports older than `CLEANUP_MAX_AGE_DAYS` (default 30) automatically.
 
 ```bash
 docker compose up -d --scale worker=4

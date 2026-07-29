@@ -71,6 +71,8 @@ export interface CrawlOptions {
   screenshotDir?: string;
   browserHeadless?: boolean;
   browserTimeout?: number;
+  /** Maximum time a single scan is allowed to run, in minutes. */
+  maxDurationMin?: number;
 }
 
 /**

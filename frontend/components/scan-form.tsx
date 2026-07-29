@@ -9,6 +9,7 @@ import { createScan } from '@/lib/api';
 export function ScanForm() {
   const [url, setUrl] = useState('');
   const [interval, setIntervalMin] = useState('');
+  const [maxDuration, setMaxDuration] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -19,7 +20,9 @@ export function ScanForm() {
     setError('');
     try {
       const recurringIntervalMin = interval ? parseInt(interval, 10) : undefined;
-      const scan = await createScan({ url, recurringIntervalMin });
+      const maxDurationMin = maxDuration ? parseInt(maxDuration, 10) : undefined;
+      const options = maxDurationMin ? { maxDurationMin } : undefined;
+      const scan = await createScan({ url, recurringIntervalMin, options });
       router.push(`/scan/${scan.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start scan');
@@ -47,6 +50,16 @@ export function ScanForm() {
         max={10080}
         className="sm:w-56"
         title="Leave empty for a one-off scan. Minimum 15 minutes."
+      />
+      <Input
+        type="number"
+        placeholder="Max duration min (optional)"
+        value={maxDuration}
+        onChange={(e) => setMaxDuration(e.target.value)}
+        min={1}
+        max={10080}
+        className="sm:w-56"
+        title="Maximum minutes the scan may run. Defaults to 60 in production."
       />
       <Button type="submit" disabled={loading}>
         {loading ? 'Starting...' : 'Start Discovery'}
