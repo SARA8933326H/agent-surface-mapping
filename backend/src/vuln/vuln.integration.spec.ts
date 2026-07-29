@@ -1,5 +1,6 @@
 import * as http from 'http';
 import { AddressInfo } from 'net';
+import { AssetType, EndpointType } from '@surface/shared';
 import { runActiveProbes } from './active-probes';
 
 jest.setTimeout(30000);
@@ -42,6 +43,18 @@ const vulnerableHandler: http.RequestListener = (req, res) => {
     res.writeHead(200).end('DB_PASSWORD=hunter2\n');
     return;
   }
+  if (req.url === '/backup.zip') {
+    res.writeHead(200).end('PK\x03\x04fake-zip-content');
+    return;
+  }
+  if (req.url === '/static/' || req.url === '/static') {
+    res.writeHead(200, { 'Content-Type': 'text/html' }).end('<html><title>Index of /static</title><body>Index of /static</body></html>');
+    return;
+  }
+  if (req.url === '/graphql' && req.method === 'POST') {
+    res.writeHead(200, { 'Content-Type': 'application/json' }).end('{"data":{"__schema":{"queryType":{"name":"Query"}}}}');
+    return;
+  }
   res.writeHead(200, { 'Content-Type': 'text/html' }).end('<html><body>hi</body></html>');
 };
 
@@ -54,20 +67,27 @@ describe('runActiveProbes (integration, live fixture servers)', () => {
   it('detects the planted vulnerabilities on a vulnerable server', async () => {
     const { server, url } = await startServer(vulnerableHandler);
     try {
-      const findings = await runActiveProbes(url, 3000);
+      const findings = await runActiveProbes(url, 3000, {
+        assets: [{ url: `${url}/static/app.js`, type: AssetType.SCRIPT, discoveredFrom: url }],
+        endpoints: [{ url: `${url}/graphql`, method: 'POST', type: EndpointType.GRAPHQL, discoveredFrom: url }],
+      });
       const categories = findings.map((f) => f.category);
 
       expect(categories).toContain('Exposed .git Directory');
       expect(categories).toContain('Exposed Environment File');
+      expect(categories).toContain('Exposed Backup Archive');
       expect(categories).toContain('Dangerous HTTP Methods Enabled');
       expect(categories).toContain('TRACE Method Enabled (XST)');
       expect(categories).toContain('CORS Reflects Arbitrary Origins With Credentials');
       expect(categories).toContain('Cookie Missing Security Flags');
       expect(categories).toContain('Site Served Over Plain HTTP');
+      expect(categories).toContain('Directory Listing Enabled');
+      expect(categories).toContain('GraphQL Introspection Enabled');
 
       // Not planted -> must not be reported (no false positives)
       expect(categories).not.toContain('Exposed .svn Directory');
       expect(categories).not.toContain('Exposed phpinfo() Page');
+      expect(categories).not.toContain('Exposed Database Backup');
 
       expect(findings.every((f) => f.source === 'DETECTED' && f.evidence && f.remediation)).toBe(true);
     } finally {

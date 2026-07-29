@@ -206,6 +206,8 @@ export interface RiskDto {
 export interface CreateScanDto {
   url: string;
   options?: CrawlOptions;
+  /** Re-run the scan automatically every N minutes (minimum 15). */
+  recurringIntervalMin?: number;
 }
 
 export interface ScanDto {
@@ -213,8 +215,21 @@ export interface ScanDto {
   url: string;
   status: ScanStatus;
   progress: number;
+  recurringIntervalMin?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+/** What changed between a scan and the previous completed scan of the same URL. */
+export interface ScanDiffDto {
+  previousScanId: string | null;
+  previousScanAt?: string;
+  pagesAdded: string[];
+  pagesRemoved: string[];
+  endpointsAdded: string[];
+  endpointsRemoved: string[];
+  vulnsAdded: string[];
+  vulnsResolved: string[];
 }
 
 export interface ScanDetailsDto extends ScanDto {

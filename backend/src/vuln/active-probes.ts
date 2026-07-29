@@ -1,6 +1,7 @@
-import { RiskDto, Severity } from '@surface/shared';
+import { AssetExtract, EndpointExtract, RiskDto, Severity } from '@surface/shared';
 import * as http from 'http';
 import * as https from 'https';
+import * as tls from 'tls';
 
 /**
  * Active light probes: a small, bounded set of read-only requests
@@ -33,11 +34,46 @@ const SENSITIVE_PATHS: { path: string; signature: RegExp; category: string; seve
     description: 'The Git metadata directory is web-accessible. Attackers can reconstruct the full source code, including secrets committed to the repository.',
   },
   {
+    path: '/.git/config',
+    signature: /\[core\]/,
+    category: 'Exposed .git Directory',
+    severity: Severity.HIGH,
+    description: 'The Git metadata directory is web-accessible. Attackers can reconstruct the full source code, including secrets committed to the repository.',
+  },
+  {
     path: '/.env',
     signature: /^\s*[A-Z0-9_]+\s*=/im,
     category: 'Exposed Environment File',
     severity: Severity.CRITICAL,
     description: 'A .env file is web-accessible. These files typically contain database credentials and API keys, giving attackers direct access to backend systems.',
+  },
+  {
+    path: '/backup.zip',
+    signature: /^PK/,
+    category: 'Exposed Backup Archive',
+    severity: Severity.HIGH,
+    description: 'A ZIP backup archive is web-accessible. Backups typically contain full source code, configuration, and credentials.',
+  },
+  {
+    path: '/backup.sql',
+    signature: /CREATE TABLE|INSERT INTO|DROP TABLE/i,
+    category: 'Exposed Database Backup',
+    severity: Severity.CRITICAL,
+    description: 'A SQL database dump is web-accessible, exposing the entire database contents including user data and password hashes.',
+  },
+  {
+    path: '/db.sql',
+    signature: /CREATE TABLE|INSERT INTO|DROP TABLE/i,
+    category: 'Exposed Database Backup',
+    severity: Severity.CRITICAL,
+    description: 'A SQL database dump is web-accessible, exposing the entire database contents including user data and password hashes.',
+  },
+  {
+    path: '/config.php.bak',
+    signature: /<\?php/i,
+    category: 'Exposed Backup File',
+    severity: Severity.HIGH,
+    description: 'A backup copy of a PHP config file is web-accessible. Backup files often expose source code and credentials that the live file would not.',
   },
   {
     path: '/.svn/entries',
@@ -276,7 +312,156 @@ export async function checkHttpsEnforcement(targetUrl: string, timeoutMs: number
   return [];
 }
 
-export async function runActiveProbes(targetUrl: string, timeoutMs: number): Promise<RiskDto[]> {
+/** TLS protocol version and certificate expiry, via a raw TLS handshake. */
+export async function checkTls(targetUrl: string, timeoutMs: number): Promise<RiskDto[]> {
+  if (!targetUrl.startsWith('https://')) return [];
+  const target = new URL(targetUrl);
+
+  return new Promise<RiskDto[]>((resolve) => {
+    const findings: RiskDto[] = [];
+    const socket = tls.connect(
+      {
+        host: target.hostname,
+        port: Number(target.port) || 443,
+        servername: target.hostname,
+        rejectUnauthorized: false, // we inspect the cert instead of trusting it
+        timeout: timeoutMs,
+      },
+      () => {
+        const protocol = socket.getProtocol();
+        if (protocol && ['TLSv1', 'TLSv1.1', 'SSLv3'].includes(protocol)) {
+          findings.push(
+            finding({
+              category: 'Deprecated TLS Protocol Version',
+              severity: Severity.MEDIUM,
+              owasp: 'A02:2021 Cryptographic Failures',
+              cwe: 'CWE-327',
+              description: `The server negotiated ${protocol}, which is deprecated and has known weaknesses (e.g. POODLE, BEAST).`,
+              evidence: `TLS handshake with ${target.hostname} negotiated ${protocol}.`,
+              url: targetUrl,
+              remediation: 'Disable TLS 1.0/1.1 and allow only TLS 1.2+.',
+            }),
+          );
+        }
+
+        const cert = socket.getPeerCertificate();
+        if (cert && cert.valid_to) {
+          const daysLeft = Math.floor((new Date(cert.valid_to).getTime() - Date.now()) / 86400000);
+          if (daysLeft < 0) {
+            findings.push(
+              finding({
+                category: 'Expired TLS Certificate',
+                severity: Severity.HIGH,
+                owasp: 'A02:2021 Cryptographic Failures',
+                cwe: 'CWE-298',
+                description: 'The TLS certificate has expired; browsers will show trust warnings and users become conditioned to click through them.',
+                evidence: `Certificate for ${target.hostname} expired on ${cert.valid_to}.`,
+                url: targetUrl,
+                remediation: 'Renew the certificate immediately and automate renewal (e.g. ACME/Let\'s Encrypt).',
+              }),
+            );
+          } else if (daysLeft <= 30) {
+            findings.push(
+              finding({
+                category: 'TLS Certificate Expiring Soon',
+                severity: Severity.LOW,
+                owasp: 'A02:2021 Cryptographic Failures',
+                cwe: 'CWE-298',
+                description: `The TLS certificate expires in ${daysLeft} day(s).`,
+                evidence: `Certificate for ${target.hostname} expires on ${cert.valid_to}.`,
+                url: targetUrl,
+                remediation: 'Renew the certificate before expiry.',
+              }),
+            );
+          }
+        }
+
+        socket.end();
+        resolve(findings);
+      },
+    );
+    socket.on('error', () => resolve([]));
+    socket.on('timeout', () => {
+      socket.destroy();
+      resolve([]);
+    });
+  });
+}
+
+/** Detects Apache/nginx autoindex pages in directories derived from asset URLs. */
+export async function checkDirectoryListing(origin: string, assets: AssetExtract[], timeoutMs: number): Promise<RiskDto[]> {
+  const dirs = new Set<string>();
+  for (const asset of assets) {
+    try {
+      const url = new URL(asset.url);
+      if (url.origin !== origin) continue;
+      const dir = url.pathname.replace(/[^/]*$/, '');
+      if (dir && dir !== '/') dirs.add(dir);
+    } catch { /* ignore malformed asset URLs */ }
+  }
+
+  const findings: RiskDto[] = [];
+  for (const dir of [...dirs].slice(0, 5)) {
+    const url = `${origin}${dir}`;
+    const res = await probe(url, { method: 'GET' }, timeoutMs);
+    if (!res || res.status !== 200) continue;
+    const body = await res.text().catch(() => '');
+    if (!/Index of \//i.test(body.slice(0, 4096)) && !/Directory Listing For/i.test(body.slice(0, 4096))) continue;
+    findings.push(
+      finding({
+        category: 'Directory Listing Enabled',
+        severity: Severity.MEDIUM,
+        owasp: 'A05:2021 Security Misconfiguration',
+        cwe: 'CWE-548',
+        description: 'The web server exposes a directory index, letting attackers enumerate files — including backups and configs not linked anywhere.',
+        evidence: `GET ${url} returned a directory listing page.`,
+        url,
+        remediation: 'Disable autoindex/Options Indexes at the web server.',
+      }),
+    );
+  }
+  return findings;
+}
+
+/** Sends a read-only introspection query to discovered GraphQL endpoints. */
+export async function checkGraphqlIntrospection(endpoints: EndpointExtract[], timeoutMs: number): Promise<RiskDto[]> {
+  const urls = [...new Set(endpoints.filter((e) => e.type === 'GRAPHQL').map((e) => e.url))].slice(0, 3);
+  const findings: RiskDto[] = [];
+
+  for (const url of urls) {
+    const res = await probe(
+      url,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: '{__schema{queryType{name}}}' }),
+      },
+      timeoutMs,
+    );
+    if (!res || res.status !== 200) continue;
+    const body = await res.text().catch(() => '');
+    if (!body.includes('__schema') && !body.includes('queryType')) continue;
+    findings.push(
+      finding({
+        category: 'GraphQL Introspection Enabled',
+        severity: Severity.MEDIUM,
+        owasp: 'A05:2021 Security Misconfiguration',
+        cwe: 'CWE-200',
+        description: 'The GraphQL endpoint answers introspection queries, handing attackers a complete map of the API schema, types, and mutations.',
+        evidence: `Introspection query to ${url} returned schema data.`,
+        url,
+        remediation: 'Disable introspection in production or restrict it to authenticated users.',
+      }),
+    );
+  }
+  return findings;
+}
+
+export async function runActiveProbes(
+  targetUrl: string,
+  timeoutMs: number,
+  context: { endpoints?: EndpointExtract[]; assets?: AssetExtract[] } = {},
+): Promise<RiskDto[]> {
   const origin = new URL(targetUrl).origin;
   const results = await Promise.allSettled([
     checkSensitivePaths(origin, timeoutMs),
@@ -284,6 +469,9 @@ export async function runActiveProbes(targetUrl: string, timeoutMs: number): Pro
     checkCors(origin, timeoutMs),
     checkInsecureCookies(origin, timeoutMs),
     checkHttpsEnforcement(targetUrl, timeoutMs),
+    checkTls(targetUrl, timeoutMs),
+    checkDirectoryListing(origin, context.assets || [], timeoutMs),
+    checkGraphqlIntrospection(context.endpoints || [], timeoutMs),
   ]);
   return results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
 }

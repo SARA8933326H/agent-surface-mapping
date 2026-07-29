@@ -1,4 +1,4 @@
-import { CreateScanDto, ReportDto, ScanDetailsDto, ScanDto, ScanStatsDto } from '@surface/shared';
+import { CreateScanDto, ReportDto, ScanDetailsDto, ScanDiffDto, ScanDto, ScanStatsDto } from '@surface/shared';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
@@ -29,6 +29,10 @@ export async function getScan(id: string): Promise<ScanDetailsDto> {
 
 export async function getScanStats(id: string): Promise<ScanStatsDto> {
   return fetchJson(`/scans/${id}/stats`);
+}
+
+export async function getScanDiff(id: string): Promise<ScanDiffDto> {
+  return fetchJson(`/scans/${id}/diff`);
 }
 
 export async function createScan(dto: CreateScanDto): Promise<ScanDto> {

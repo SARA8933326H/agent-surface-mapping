@@ -207,7 +207,6 @@ export function checkOutdatedLibraries(assets: AssetExtract[]): RiskDto[] {
 }
 
 const CSRF_TOKEN_PATTERN = /csrf|xsrf|token|nonce|authenticity/i;
-
 export function checkForms(targetUrl: string, forms: FormExtract[]): RiskDto[] {
   const findings: RiskDto[] = [];
   const seen = new Set<string>();
@@ -261,6 +260,73 @@ export function checkForms(targetUrl: string, forms: FormExtract[]): RiskDto[] {
   return findings;
 }
 
+const JWT_PATTERN = /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*/g;
+
+function decodeJwtSegment(segment: string): Record<string, unknown> | null {
+  try {
+    const padded = segment + '='.repeat((4 - (segment.length % 4)) % 4);
+    return JSON.parse(Buffer.from(padded, 'base64url').toString('utf-8'));
+  } catch {
+    return null;
+  }
+}
+
+/** Analyzes JWTs found in cookies and response headers (alg, expiry). */
+export function checkTokens(pages: PageExtract[]): RiskDto[] {
+  const findings: RiskDto[] = [];
+  const seen = new Set<string>();
+
+  for (const page of pages) {
+    const haystacks = [...page.cookies, ...Object.values(page.headers)];
+    for (const haystack of haystacks) {
+      for (const match of haystack.matchAll(JWT_PATTERN)) {
+        const token = match[0];
+        if (seen.has(token)) continue;
+        seen.add(token);
+
+        const [headerSeg, payloadSeg] = token.split('.');
+        const header = decodeJwtSegment(headerSeg);
+        const payload = decodeJwtSegment(payloadSeg);
+        if (!header || !payload) continue;
+
+        const alg = String(header.alg || '').toLowerCase();
+        if (alg === 'none') {
+          findings.push(
+            finding({
+              category: 'JWT With alg=none',
+              severity: Severity.HIGH,
+              owasp: 'A02:2021 Cryptographic Failures',
+              cwe: 'CWE-347',
+              description: 'A JSON Web Token uses alg=none, meaning it carries no signature. If the server accepts such tokens, attackers can forge any identity or claim.',
+              evidence: `Token with alg=none observed on ${page.url}.`,
+              url: page.url,
+              remediation: 'Reject alg=none tokens server-side and pin accepted algorithms explicitly.',
+            }),
+          );
+          continue;
+        }
+
+        const exp = typeof payload.exp === 'number' ? payload.exp : null;
+        if (exp === null) {
+          findings.push(
+            finding({
+              category: 'JWT Without Expiry',
+              severity: Severity.LOW,
+              owasp: 'A07:2021 Identification and Authentication Failures',
+              cwe: 'CWE-613',
+              description: 'A JSON Web Token has no exp claim, so a stolen token remains valid indefinitely.',
+              evidence: `Token without exp claim observed on ${page.url} (alg: ${header.alg || 'unknown'}).`,
+              url: page.url,
+              remediation: 'Set short exp lifetimes and use refresh-token rotation.',
+            }),
+          );
+        }
+      }
+    }
+  }
+  return findings;
+}
+
 export function runPassiveChecks(targetUrl: string, pages: PageExtract[], forms: FormExtract[], assets: AssetExtract[]): RiskDto[] {
   return [
     ...checkSecurityHeaders(pages),
@@ -268,5 +334,6 @@ export function runPassiveChecks(targetUrl: string, pages: PageExtract[], forms:
     ...checkMixedContent(pages, assets),
     ...checkOutdatedLibraries(assets),
     ...checkForms(targetUrl, forms),
+    ...checkTokens(pages),
   ];
 }

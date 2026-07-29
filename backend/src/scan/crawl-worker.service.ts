@@ -100,7 +100,7 @@ export class CrawlWorker implements OnModuleDestroy {
 
       let risks = this.riskService.matchKnownRisks(classifications);
 
-      const detected = await this.vulnService.runChecks(url, pages, result.forms, result.assets);
+      const detected = await this.vulnService.runChecks(url, pages, result.forms, result.assets, result.endpoints);
       risks = [...risks, ...detected];
 
       if (!Config.DISABLE_LLM && Config.OLLAMA_HOST) {

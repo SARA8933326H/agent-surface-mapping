@@ -1,5 +1,7 @@
 # Attack Surface Discovery Prototype
 
+[![CI](https://github.com/SARA8933326H/agent-surface-mapping/actions/workflows/ci.yml/badge.svg)](https://github.com/SARA8933326H/agent-surface-mapping/actions/workflows/ci.yml)
+
 A free, open-source attack surface discovery prototype that crawls an authorized website, extracts pages, forms, endpoints, and assets, classifies functionality with heuristics and an optional local LLM, and maps findings to OWASP Top 10 / CWE risks. It also detects common vulnerabilities — missing security headers, insecure cookies, exposed sensitive files, CORS misconfigurations, outdated JavaScript libraries, and more — using passive analysis of crawled data plus a small set of safe, read-only HTTP probes. The result is a polished, interactive dashboard with an attack-surface graph, downloadable reports, and technology stack detection.
 
 **Important:** This tool never generates exploit payloads, attempts bypasses, brute forces, injects SQL, or fuzzes inputs. Vulnerability checks are passive or use bounded, read-only requests (GET/OPTIONS/TRACE) against the target origin. Only scan systems you are authorized to test.
@@ -152,10 +154,19 @@ test suite, and builds the frontend on every push to `master`/`dev` and every PR
 3. The worker launches Playwright, explores the application, and extracts pages, forms, endpoints, assets, cookies, headers, and screenshots.
 4. Heuristic classification identifies auth, admin, dashboard, search, CRUD, upload, download, API, GraphQL, and hidden pages.
 5. A local JSON knowledge base maps each discovered functionality to OWASP Top 10 and CWE risks.
-6. Vulnerability detection runs passive checks on the crawled data (security headers, version disclosure, mixed content, outdated libraries, form weaknesses) and optional read-only probes (sensitive paths, HTTP methods, CORS, cookie flags, HTTPS enforcement), producing evidence-backed findings with remediation guidance.
+6. Vulnerability detection runs passive checks on the crawled data (security headers, version disclosure, mixed content, outdated libraries, form weaknesses, JWT analysis) and optional read-only probes (sensitive paths and backup files, HTTP methods, CORS, cookie flags, HTTPS enforcement, TLS version/cert expiry, directory listing, GraphQL introspection), producing evidence-backed findings with remediation guidance.
 7. An optional local LLM can summarize existing findings against the same knowledge base; it never invents new vulnerabilities.
 8. The backend builds an internal graph of nodes (pages, forms, endpoints, scripts, auth, admin, objects) and edges (navigation, API calls, form actions, imports, relationships).
 9. The frontend displays the interactive graph, tables, stats, risks, detected vulnerabilities, screenshots, and reports.
+
+## Recurring Scans & Diffing
+
+Pass `recurringIntervalMin` when creating a scan (or use the "Repeat every N min" field in
+the dashboard) and the worker re-enqueues the same target automatically once each interval
+elapses (minimum 15 minutes, skipped while a scan of the same URL is still active). Every
+scan detail page has a **Changes** tab (`GET /scans/:id/diff`) comparing it with the
+previous completed scan of the same URL: added/removed pages and endpoints, plus new and
+resolved vulnerabilities.
 
 ## API Endpoints
 

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ScanTabs } from '@/components/scan-tabs';
 import { CancelScanButton } from '@/components/cancel-scan-button';
 import { ScanRefresher } from '@/components/scan-refresher';
-import { getScan, getScanStats } from '@/lib/api';
+import { getScan, getScanDiff, getScanStats } from '@/lib/api';
 import { ScanStatus } from '@surface/shared';
 
 export const dynamic = 'force-dynamic';
@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic';
 export default async function ScanDetailPage({ params }: { params: { id: string } }) {
   const scan = await getScan(params.id);
   const stats = await getScanStats(params.id);
+  const diff = await getScanDiff(params.id);
   const active = scan.status === ScanStatus.PENDING || scan.status === ScanStatus.RUNNING;
 
   return (
@@ -30,7 +31,7 @@ export default async function ScanDetailPage({ params }: { params: { id: string 
           </span>
         )}
       </div>
-      <ScanTabs scan={scan} stats={stats} />
+      <ScanTabs scan={scan} stats={stats} diff={diff} />
     </main>
   );
 }
