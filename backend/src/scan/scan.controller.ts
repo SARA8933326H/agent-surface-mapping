@@ -10,7 +10,11 @@ export class ScanController {
 
   @Post()
   async create(@Body() dto: CreateScanRequestDto) {
-    const scan = await this.scanService.create({ url: dto.url, options: dto.options });
+    const scan = await this.scanService.create({
+      url: dto.url,
+      options: dto.options,
+      recurringIntervalMin: dto.recurringIntervalMin,
+    });
     return scan;
   }
 
@@ -32,5 +36,10 @@ export class ScanController {
   @Post(':id/cancel')
   async cancel(@Param('id') id: string) {
     return this.scanService.cancel(id);
+  }
+
+  @Get(':id/diff')
+  async diff(@Param('id') id: string) {
+    return this.scanService.getDiff(id);
   }
 }

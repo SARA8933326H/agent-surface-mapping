@@ -9,6 +9,7 @@ import {
   PageExtract,
   RiskDto,
   ScanDetailsDto,
+  ScanDiffDto,
   ScanDto,
   ScanStatus,
   ScanStatsDto,
@@ -48,10 +49,43 @@ export class ScanService {
         status: ScanStatus.PENDING,
         progress: 0,
         options: dto.options as any,
+        recurringIntervalMin: dto.recurringIntervalMin ?? null,
       },
     });
     await this.queue.add({ scanId: scan.id, url: dto.url, options: dto.options || {} });
     return this.toScanDto(scan);
+  }
+
+  /**
+   * Enqueues a fresh scan for every recurring scan whose interval has
+   * elapsed. Skips URLs that already have an active scan.
+   */
+  async enqueueDueRecurringScans(): Promise<number> {
+    const recurring = await this.prisma.scan.findMany({
+      where: {
+        recurringIntervalMin: { not: null },
+        status: { in: [ScanStatus.COMPLETED, ScanStatus.FAILED, ScanStatus.CANCELLED] },
+      },
+    });
+
+    let enqueued = 0;
+    for (const scan of recurring) {
+      const nextDue = scan.updatedAt.getTime() + scan.recurringIntervalMin! * 60_000;
+      if (nextDue > Date.now()) continue;
+
+      const active = await this.prisma.scan.findFirst({
+        where: { url: scan.url, status: { in: [ScanStatus.PENDING, ScanStatus.RUNNING] } },
+      });
+      if (active) continue;
+
+      await this.create({
+        url: scan.url,
+        options: (scan.options as any) || {},
+        recurringIntervalMin: scan.recurringIntervalMin!,
+      });
+      enqueued++;
+    }
+    return enqueued;
   }
 
   async findAll(): Promise<ScanDto[]> {
@@ -283,12 +317,76 @@ export class ScanService {
     };
   }
 
-  private toScanDto(scan: { id: string; url: string; status: string; progress: number; createdAt: Date; updatedAt: Date }): ScanDto {
+  /**
+   * Compares a scan with the most recent COMPLETED scan of the same URL
+   * before it. Returns an empty diff (previousScanId null) when there is
+   * nothing to compare against.
+   */
+  async getDiff(id: string): Promise<ScanDiffDto> {
+    const scan = await this.prisma.scan.findUnique({
+      where: { id },
+      include: { pages: true, endpoints: true, risks: true },
+    });
+    if (!scan) throw new NotFoundException(`Scan ${id} not found`);
+
+    const previous = await this.prisma.scan.findFirst({
+      where: {
+        url: scan.url,
+        id: { not: id },
+        status: ScanStatus.COMPLETED,
+        createdAt: { lt: scan.createdAt },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { pages: true, endpoints: true, risks: true },
+    });
+
+    const empty: ScanDiffDto = {
+      previousScanId: null,
+      pagesAdded: [],
+      pagesRemoved: [],
+      endpointsAdded: [],
+      endpointsRemoved: [],
+      vulnsAdded: [],
+      vulnsResolved: [],
+    };
+    if (!previous) return empty;
+
+    const diff = <T>(current: T[], old: T[], key: (x: T) => string): { added: string[]; removed: string[] } => {
+      const oldKeys = new Set(old.map(key));
+      const currentKeys = new Set(current.map(key));
+      return {
+        added: [...currentKeys].filter((k) => !oldKeys.has(k)).sort(),
+        removed: [...oldKeys].filter((k) => !currentKeys.has(k)).sort(),
+      };
+    };
+
+    const pages = diff(scan.pages, previous.pages, (p) => p.url);
+    const endpoints = diff(scan.endpoints, previous.endpoints, (e) => `${e.method} ${e.url}`);
+    const vulns = diff(
+      scan.risks.filter((r) => r.source === 'DETECTED'),
+      previous.risks.filter((r) => r.source === 'DETECTED'),
+      (r) => `${r.category}|${r.url || ''}`,
+    );
+
+    return {
+      previousScanId: previous.id,
+      previousScanAt: previous.createdAt.toISOString(),
+      pagesAdded: pages.added,
+      pagesRemoved: pages.removed,
+      endpointsAdded: endpoints.added,
+      endpointsRemoved: endpoints.removed,
+      vulnsAdded: vulns.added,
+      vulnsResolved: vulns.removed,
+    };
+  }
+
+  private toScanDto(scan: { id: string; url: string; status: string; progress: number; recurringIntervalMin?: number | null; createdAt: Date; updatedAt: Date }): ScanDto {
     return {
       id: scan.id,
       url: scan.url,
       status: scan.status as ScanStatus,
       progress: scan.progress,
+      recurringIntervalMin: scan.recurringIntervalMin ?? undefined,
       createdAt: scan.createdAt.toISOString(),
       updatedAt: scan.updatedAt.toISOString(),
     };

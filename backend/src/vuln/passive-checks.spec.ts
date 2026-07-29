@@ -5,6 +5,7 @@ import {
   checkMixedContent,
   checkOutdatedLibraries,
   checkForms,
+  checkTokens,
   runPassiveChecks,
 } from './passive-checks';
 
@@ -174,6 +175,45 @@ describe('checkForms', () => {
   it('ignores GET forms', () => {
     const form = makeForm({ method: 'GET', fields: [{ name: 'q', type: 'text' }] });
     expect(checkForms('https://example.com', [form])).toHaveLength(0);
+  });
+});
+
+function b64url(obj: Record<string, unknown>): string {
+  return Buffer.from(JSON.stringify(obj)).toString('base64url');
+}
+
+function makeJwt(header: Record<string, unknown>, payload: Record<string, unknown>): string {
+  return `${b64url(header)}.${b64url(payload)}.${b64url({ sig: 'x' })}`;
+}
+
+describe('checkTokens', () => {
+  it('flags alg=none JWTs as HIGH', () => {
+    const token = makeJwt({ alg: 'none', typ: 'JWT' }, { sub: 'admin' });
+    const page = makePage({ cookies: [`session=${token}`] });
+    const findings = checkTokens([page]);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].category).toBe('JWT With alg=none');
+    expect(findings[0].severity).toBe(Severity.HIGH);
+  });
+
+  it('flags JWTs without an exp claim as LOW', () => {
+    const token = makeJwt({ alg: 'HS256', typ: 'JWT' }, { sub: 'user1' });
+    const page = makePage({ cookies: [`token=${token}`] });
+    const findings = checkTokens([page]);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].category).toBe('JWT Without Expiry');
+    expect(findings[0].severity).toBe(Severity.LOW);
+  });
+
+  it('ignores JWTs with a proper expiry', () => {
+    const token = makeJwt({ alg: 'HS256', typ: 'JWT' }, { sub: 'user1', exp: Math.floor(Date.now() / 1000) + 3600 });
+    const page = makePage({ cookies: [`token=${token}`] });
+    expect(checkTokens([page])).toHaveLength(0);
+  });
+
+  it('ignores non-JWT cookies', () => {
+    const page = makePage({ cookies: ['sessionid=abc123'] });
+    expect(checkTokens([page])).toHaveLength(0);
   });
 });
 
