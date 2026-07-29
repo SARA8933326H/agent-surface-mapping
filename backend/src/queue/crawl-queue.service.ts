@@ -47,6 +47,13 @@ export class CrawlQueueService implements OnModuleDestroy {
     return state;
   }
 
+  /**
+   * Lightweight Redis ping used by the health controller.
+   */
+  async ping(): Promise<string> {
+    return this.redis.ping();
+  }
+
   async onModuleDestroy() {
     await this.queue.close();
     await this.redis.quit();
