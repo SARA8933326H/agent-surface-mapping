@@ -10,10 +10,12 @@ import { RiskModule } from '../risk/risk.module';
 import { VulnModule } from '../vuln/vuln.module';
 import { TechService } from '../tech/tech.service';
 
+import { CleanupService } from './cleanup.service';
+
 @Module({
   imports: [PrismaModule, QueueModule, GraphModule, RiskModule, VulnModule],
   controllers: [ScanController],
-  providers: [ScanService, CrawlWorker, SchedulerService, TechService],
-  exports: [ScanService, CrawlWorker, SchedulerService],
+  providers: [ScanService, CrawlWorker, SchedulerService, TechService, CleanupService],
+  exports: [ScanService, CrawlWorker, SchedulerService, CleanupService],
 })
 export class ScanModule {}

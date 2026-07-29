@@ -91,6 +91,9 @@ This starts PostgreSQL, Redis, backend API, worker, and frontend on:
 
 ## Production (HTTPS + Managed Postgres/Redis)
 
+See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for the full production checklist including managed
+Postgres/Redis, `prisma migrate deploy`, HTTPS, CORS, and worker scaling.
+
 Use `docker-compose.prod.yml`. It drops the local postgres/redis containers, requires
 `DATABASE_URL`/`REDIS_URL` for your managed services, and puts a Caddy reverse proxy in
 front that terminates HTTPS with automatic Let's Encrypt certificates. Migrations run via
@@ -128,7 +131,8 @@ rate limiting keys on the real client IP.
 
 Workers are stateless and scale horizontally; crawl jobs retry with exponential backoff
 (`QUEUE_ATTEMPTS`, `QUEUE_BACKOFF_DELAY`) and each worker runs `WORKER_CONCURRENCY`
-concurrent jobs (default 2).
+concurrent jobs (default 2). Enable `CLEANUP_ENABLED=true` on a single worker to delete
+scans, screenshots, and reports older than `CLEANUP_MAX_AGE_DAYS` (default 30) automatically.
 
 ```bash
 docker compose up -d --scale worker=4
