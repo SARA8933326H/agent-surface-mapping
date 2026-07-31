@@ -6,25 +6,40 @@ on:
   pull_request:
     branches: [master]
 
+env:
+  NODE_ENV: test
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/surface?schema=public
+  REDIS_URL: redis://localhost:6379
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+  CORS_ORIGIN: http://localhost:3000
+  NEXT_PUBLIC_API_URL: http://localhost:3001
+  NEXT_PUBLIC_API_KEY: ''
+  ALLOW_PRIVATE_TARGETS: 'true'
+  VULN_CHECKS_ENABLED: 'true'
+  VULN_ACTIVE_PROBES: 'true'
+  VULN_PROBE_TIMEOUT: '5000'
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # pnpm version is taken from the packageManager field in package.json.
-      - uses: pnpm/action-setup@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
+
+      - name: Verify pnpm version
+        run: pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        env:
-          # Browsers are only needed at crawl time, not for build/tests.
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
       - name: Build packages
         run: |
@@ -39,7 +54,18 @@ jobs:
         run: pnpm --filter @surface/backend typecheck
 
       - name: Test backend
-        run: pnpm --filter @surface/backend test
+        run: pnpm --filter @surface/backend test -- --ci --runInBand
 
       - name: Build frontend
         run: pnpm --filter @surface/frontend build
+
+      - name: Upload build artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            backend/dist
+            frontend/.next
+            pnpm-lock.yaml
+          retention-days: 3
