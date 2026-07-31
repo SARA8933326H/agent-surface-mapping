@@ -91,8 +91,84 @@ export function classifyPage(page: PageExtract): PageClassification {
     signals.push('graphql_endpoint');
   }
 
+  // Payment / billing detection
+  const paymentTokens = ['payment', 'checkout', 'billing', 'card', 'stripe', 'paypal', 'wallet', 'subscription', 'invoice'];
+  if (paymentTokens.some((t) => url.includes(t) || title.includes(t))) {
+    functionality.add(FunctionalityType.PAYMENT);
+    signals.push('payment_path');
+  }
+
+  // OAuth / SSO detection
+  const oauthTokens = ['oauth', 'sso', 'openid', 'saml', 'social', 'signin-with', 'login-with', 'google', 'github', 'facebook'];
+  if (oauthTokens.some((t) => url.includes(t) || title.includes(t))) {
+    functionality.add(FunctionalityType.OAUTH);
+    signals.push('oauth_path');
+  }
+
+  // User profile / account detection
+  const profileTokens = ['profile', 'my-account', 'account', 'user', 'member'];
+  if (profileTokens.some((t) => url.includes(t) || title.includes(t))) {
+    functionality.add(FunctionalityType.PROFILE);
+    signals.push('profile_path');
+  }
+
+  // Settings / preferences detection
+  const settingsTokens = ['settings', 'preferences', 'configuration', 'options'];
+  if (settingsTokens.some((t) => url.includes(t) || title.includes(t))) {
+    functionality.add(FunctionalityType.SETTINGS);
+    signals.push('settings_path');
+  }
+
+  // Comment / review / feedback detection
+  const commentTokens = ['comment', 'review', 'feedback', 'reply', 'rating'];
+  if (commentTokens.some((t) => url.includes(t) || title.includes(t))) {
+    functionality.add(FunctionalityType.COMMENT);
+    signals.push('comment_path');
+  }
+
+  // Contact / support detection
+  const contactTokens = ['contact', 'support', 'help', 'ticket'];
+  if (contactTokens.some((t) => url.includes(t) || title.includes(t))) {
+    functionality.add(FunctionalityType.CONTACT);
+    signals.push('contact_path');
+  }
+
+  // Newsletter / subscription detection
+  const newsletterTokens = ['newsletter', 'subscribe', 'mailing', 'email-updates'];
+  if (newsletterTokens.some((t) => url.includes(t) || title.includes(t))) {
+    functionality.add(FunctionalityType.NEWSLETTER);
+    signals.push('newsletter_path');
+  }
+
+  // Webhook detection
+  if (url.includes('webhook')) {
+    functionality.add(FunctionalityType.WEBHOOK);
+    signals.push('webhook_path');
+  }
+
+  // Reporting / analytics detection
+  const reportingTokens = ['report', 'analytics', 'stats', 'insights', 'metrics'];
+  if (reportingTokens.some((t) => url.includes(t) || title.includes(t))) {
+    functionality.add(FunctionalityType.REPORTING);
+    signals.push('reporting_path');
+  }
+
+  // Monitoring / status detection
+  const monitoringTokens = ['status', 'monitoring', 'uptime', 'health'];
+  if (monitoringTokens.some((t) => url.includes(t) || title.includes(t))) {
+    functionality.add(FunctionalityType.MONITORING);
+    signals.push('monitoring_path');
+  }
+
+  // Documentation detection
+  const docsTokens = ['docs', 'documentation', 'readme', 'guide', 'tutorial'];
+  if (docsTokens.some((t) => url.includes(t) || title.includes(t))) {
+    functionality.add(FunctionalityType.DOCS);
+    signals.push('docs_path');
+  }
+
   // Hidden / internal route detection
-  const hiddenTokens = ['internal', 'hidden', 'debug', 'test', 'staging', 'dev', 'api-docs', 'swagger', 'openapi', 'health', 'metrics', '.env', 'config'];
+  const hiddenTokens = ['internal', 'hidden', 'debug', 'test', 'staging', 'dev', '.env', 'config'];
   if (hiddenTokens.some((t) => url.includes(t))) {
     functionality.add(FunctionalityType.HIDDEN);
     signals.push('hidden_path');
@@ -127,6 +203,17 @@ export function classifyEndpoint(endpoint: EndpointExtract): FunctionalityType[]
   if (lower.includes('upload')) types.push(FunctionalityType.UPLOAD);
   if (lower.includes('download')) types.push(FunctionalityType.DOWNLOAD);
   if (lower.includes('search')) types.push(FunctionalityType.SEARCH);
+  if (lower.includes('payment') || lower.includes('checkout') || lower.includes('billing')) types.push(FunctionalityType.PAYMENT);
+  if (lower.includes('oauth') || lower.includes('sso') || lower.includes('saml')) types.push(FunctionalityType.OAUTH);
+  if (lower.includes('profile') || lower.includes('account')) types.push(FunctionalityType.PROFILE);
+  if (lower.includes('settings') || lower.includes('preferences')) types.push(FunctionalityType.SETTINGS);
+  if (lower.includes('comment') || lower.includes('review')) types.push(FunctionalityType.COMMENT);
+  if (lower.includes('contact') || lower.includes('support')) types.push(FunctionalityType.CONTACT);
+  if (lower.includes('newsletter') || lower.includes('subscribe')) types.push(FunctionalityType.NEWSLETTER);
+  if (lower.includes('webhook')) types.push(FunctionalityType.WEBHOOK);
+  if (lower.includes('report') || lower.includes('analytics')) types.push(FunctionalityType.REPORTING);
+  if (lower.includes('health') || lower.includes('status') || lower.includes('monitoring')) types.push(FunctionalityType.MONITORING);
+  if (lower.includes('docs') || lower.includes('documentation')) types.push(FunctionalityType.DOCS);
   return types;
 }
 
@@ -149,6 +236,12 @@ export function classifyForm(form: FormExtract): FunctionalityType[] {
   }
   if (action.includes('search')) types.push(FunctionalityType.SEARCH);
   if (action.includes('admin')) types.push(FunctionalityType.ADMIN);
+  if (action.includes('payment') || action.includes('checkout') || action.includes('billing')) types.push(FunctionalityType.PAYMENT);
+  if (action.includes('profile') || action.includes('account')) types.push(FunctionalityType.PROFILE);
+  if (action.includes('settings') || action.includes('preferences')) types.push(FunctionalityType.SETTINGS);
+  if (action.includes('comment') || action.includes('review')) types.push(FunctionalityType.COMMENT);
+  if (action.includes('contact') || action.includes('support')) types.push(FunctionalityType.CONTACT);
+  if (action.includes('newsletter') || action.includes('subscribe')) types.push(FunctionalityType.NEWSLETTER);
   return types;
 }
 

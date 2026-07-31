@@ -53,6 +53,9 @@ jobs:
       - name: Typecheck backend
         run: pnpm --filter @surface/backend typecheck
 
+      - name: Test classifier
+        run: pnpm --filter @surface/classifier test -- --ci --runInBand
+
       - name: Test backend
         run: pnpm --filter @surface/backend test -- --ci --runInBand
 

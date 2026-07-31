@@ -33,6 +33,17 @@ export enum FunctionalityType {
   API = 'API',
   GRAPHQL = 'GRAPHQL',
   HIDDEN = 'HIDDEN',
+  PAYMENT = 'PAYMENT',
+  OAUTH = 'OAUTH',
+  PROFILE = 'PROFILE',
+  SETTINGS = 'SETTINGS',
+  COMMENT = 'COMMENT',
+  CONTACT = 'CONTACT',
+  NEWSLETTER = 'NEWSLETTER',
+  WEBHOOK = 'WEBHOOK',
+  REPORTING = 'REPORTING',
+  MONITORING = 'MONITORING',
+  DOCS = 'DOCS',
 }
 
 export enum Severity {
