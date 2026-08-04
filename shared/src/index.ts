@@ -245,6 +245,24 @@ export interface ScanDiffDto {
   vulnsResolved: string[];
 }
 
+export interface DnsRecordDto {
+  type: string;
+  name: string;
+  value: string;
+  ttl?: number;
+}
+
+export interface DomainInfoDto {
+  domain: string;
+  registrar?: string;
+  expiryDate?: string;
+  daysUntilExpiry?: number;
+  dnssec?: boolean;
+  nameServers?: string[];
+  dnsRecords?: DnsRecordDto[];
+  waybackUrls?: string[];
+}
+
 export interface ScanDetailsDto extends ScanDto {
   pages: PageExtract[];
   forms: FormExtract[];
@@ -257,12 +275,13 @@ export interface ScanDetailsDto extends ScanDto {
   errors: string[];
   durationMs: number;
   techStack?: string[];
+  domainInfo?: DomainInfoDto;
 }
 
 export interface ReportDto {
   id: string;
   scanId: string;
-  format: 'PDF' | 'MARKDOWN' | 'JSON';
+  format: 'PDF' | 'MARKDOWN' | 'JSON' | 'TXT';
   path: string;
   createdAt: string;
 }

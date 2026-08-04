@@ -4,7 +4,7 @@ import { Redis } from 'ioredis';
 import { basename } from 'path';
 import { crawlWebsite } from '@surface/crawler';
 import { buildClassifications, uniqueFunctionalities, summarizeWithLLM } from '@surface/classifier';
-import { QueueJobData, PageExtract, ScanStatus } from '@surface/shared';
+import { DomainInfoDto, QueueJobData, PageExtract, ScanStatus } from '@surface/shared';
 import { Config } from '../config';
 import { CRAWL_QUEUE_NAME } from '../queue/crawl-queue.service';
 import { ScanService } from './scan.service';
@@ -12,6 +12,7 @@ import { GraphService } from '../graph/graph.service';
 import { RiskService } from '../risk/risk.service';
 import { TechService } from '../tech/tech.service';
 import { VulnService } from '../vuln/vuln.service';
+import { ReconService } from '../recon/recon.service';
 
 @Injectable()
 export class CrawlWorker implements OnModuleDestroy {
@@ -26,6 +27,7 @@ export class CrawlWorker implements OnModuleDestroy {
     private riskService: RiskService,
     private techService: TechService,
     private vulnService: VulnService,
+    private reconService: ReconService,
   ) {
     this.redis = new Redis(Config.REDIS_URL, { maxRetriesPerRequest: null });
   }
@@ -126,6 +128,8 @@ export class CrawlWorker implements OnModuleDestroy {
         }
       }
 
+      const domainInfo = await this.reconService.gatherDomainInfo(url);
+
       await this.scanService.complete(scanId, {
         pages,
         forms: result.forms,
@@ -137,6 +141,7 @@ export class CrawlWorker implements OnModuleDestroy {
         techStack,
         errors: result.errors,
         durationMs: Date.now() - start,
+        domainInfo,
       });
     } catch (error) {
       if ((await this.scanService.getStatus(scanId)) === ScanStatus.CANCELLED) return;

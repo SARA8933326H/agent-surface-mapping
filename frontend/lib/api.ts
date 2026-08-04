@@ -46,7 +46,7 @@ export async function cancelScan(id: string): Promise<ScanDto> {
   return fetchJson(`/scans/${id}/cancel`, { method: 'POST' });
 }
 
-export async function generateReport(scanId: string, format: 'PDF' | 'MARKDOWN' | 'JSON'): Promise<ReportDto> {
+export async function generateReport(scanId: string, format: 'PDF' | 'MARKDOWN' | 'JSON' | 'TXT'): Promise<ReportDto> {
   return fetchJson<ReportDto>(`/reports/scans/${scanId}/${format.toLowerCase()}`, { method: 'POST' });
 }
 

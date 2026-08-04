@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { ReportDto } from '@surface/shared';
-import { generateJsonReport, generateMarkdownReport, generatePdfReport } from '@surface/reports';
+import { generateJsonReport, generateMarkdownReport, generatePdfReport, generateTxtReport } from '@surface/reports';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScanService } from '../scan/scan.service';
 import { Config } from '../config';
@@ -14,12 +14,13 @@ export class ReportService {
     private scanService: ScanService,
   ) {}
 
-  async generate(scanId: string, format: 'PDF' | 'MARKDOWN' | 'JSON'): Promise<ReportDto> {
+  async generate(scanId: string, format: 'PDF' | 'MARKDOWN' | 'JSON' | 'TXT'): Promise<ReportDto> {
     const scan = await this.scanService.findOne(scanId);
     if (!scan) throw new NotFoundException(`Scan ${scanId} not found`);
 
     await mkdir(Config.REPORT_DIR, { recursive: true });
-    const fileName = `report-${scanId}.${format.toLowerCase()}`;
+    const ext = format === 'TXT' ? 'txt' : format.toLowerCase();
+    const fileName = `report-${scanId}.${ext}`;
     const filePath = join(Config.REPORT_DIR, fileName);
 
     if (format === 'JSON') {
@@ -28,6 +29,9 @@ export class ReportService {
     } else if (format === 'MARKDOWN') {
       const md = generateMarkdownReport(scan);
       await writeFile(filePath, md, 'utf-8');
+    } else if (format === 'TXT') {
+      const txt = generateTxtReport(scan);
+      await writeFile(filePath, txt, 'utf-8');
     } else if (format === 'PDF') {
       await generatePdfReport(scan, filePath);
     } else {
@@ -45,7 +49,7 @@ export class ReportService {
     return {
       id: report.id,
       scanId: report.scanId,
-      format: report.format as 'PDF' | 'MARKDOWN' | 'JSON',
+      format: report.format as 'PDF' | 'MARKDOWN' | 'JSON' | 'TXT',
       path: report.path,
       createdAt: report.createdAt.toISOString(),
     };
@@ -57,7 +61,7 @@ export class ReportService {
     return {
       id: report.id,
       scanId: report.scanId,
-      format: report.format as 'PDF' | 'MARKDOWN' | 'JSON',
+      format: report.format as 'PDF' | 'MARKDOWN' | 'JSON' | 'TXT',
       path: report.path,
       createdAt: report.createdAt.toISOString(),
     };

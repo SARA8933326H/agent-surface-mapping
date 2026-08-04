@@ -9,11 +9,12 @@ import { GraphModule } from '../graph/graph.module';
 import { RiskModule } from '../risk/risk.module';
 import { VulnModule } from '../vuln/vuln.module';
 import { TechService } from '../tech/tech.service';
+import { ReconModule } from '../recon/recon.module';
 
 import { CleanupService } from './cleanup.service';
 
 @Module({
-  imports: [PrismaModule, QueueModule, GraphModule, RiskModule, VulnModule],
+  imports: [PrismaModule, QueueModule, GraphModule, RiskModule, VulnModule, ReconModule],
   controllers: [ScanController],
   providers: [ScanService, CrawlWorker, SchedulerService, TechService, CleanupService],
   exports: [ScanService, CrawlWorker, SchedulerService, CleanupService],

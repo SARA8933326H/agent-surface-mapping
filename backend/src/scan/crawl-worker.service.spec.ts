@@ -11,6 +11,8 @@ jest.mock('@surface/crawler', () => ({
   crawlWebsite: jest.fn(),
 }));
 
+jest.mock('whois-json', () => jest.fn().mockResolvedValue({}));
+
 jest.mock('../config', () => ({
   Config: {
     REDIS_URL: 'redis://localhost:6379',
@@ -40,6 +42,7 @@ describe('CrawlWorker timeout', () => {
   const riskServiceMock = { matchKnownRisks: jest.fn().mockReturnValue([]) };
   const techServiceMock = { detect: jest.fn().mockReturnValue([]) };
   const vulnServiceMock = { runChecks: jest.fn().mockResolvedValue([]) };
+  const reconServiceMock = { gatherDomainInfo: jest.fn().mockResolvedValue(undefined) };
 
   beforeEach(() => {
     worker = new CrawlWorker(
@@ -48,6 +51,7 @@ describe('CrawlWorker timeout', () => {
       riskServiceMock as any,
       techServiceMock as any,
       vulnServiceMock as any,
+      reconServiceMock as any,
     );
     jest.clearAllMocks();
   });
