@@ -13,6 +13,7 @@ import { VulnsTable } from '@/components/vulns-table';
 import { Screenshots } from '@/components/screenshots';
 import { ReportsList } from '@/components/reports-list';
 import { ScanDiff } from '@/components/scan-diff';
+import { DomainInfo } from '@/components/domain-info';
 import { ScanStatusBadge } from '@/components/scan-status-badge';
 
 export function ScanTabs({ scan, stats, diff }: { scan: ScanDetailsDto; stats: ScanStatsDto; diff: ScanDiffDto }) {
@@ -27,6 +28,7 @@ export function ScanTabs({ scan, stats, diff }: { scan: ScanDetailsDto; stats: S
         <TabsTrigger value="risks">Risks</TabsTrigger>
         <TabsTrigger value="vulnerabilities">Vulnerabilities</TabsTrigger>
         <TabsTrigger value="changes">Changes</TabsTrigger>
+        <TabsTrigger value="recon">Recon</TabsTrigger>
         <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
         <TabsTrigger value="reports">Reports</TabsTrigger>
       </TabsList>
@@ -86,6 +88,10 @@ export function ScanTabs({ scan, stats, diff }: { scan: ScanDetailsDto; stats: S
 
       <TabsContent value="changes">
         <ScanDiff diff={diff} />
+      </TabsContent>
+
+      <TabsContent value="recon">
+        <DomainInfo info={scan.domainInfo} />
       </TabsContent>
 
       <TabsContent value="screenshots">

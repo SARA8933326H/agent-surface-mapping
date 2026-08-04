@@ -27,6 +27,7 @@ model Scan {
   reports         Report[]
   errors          Json?
   techStack       Json?
+  domainInfo      Json?
 }
 
 model Page {

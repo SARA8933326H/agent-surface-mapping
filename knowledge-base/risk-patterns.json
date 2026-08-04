@@ -261,6 +261,243 @@
           "description": "Debug or internal routes may expose stack traces, configs, or routes."
         }
       ]
+    },
+    {
+      "functionality": "PAYMENT",
+      "risks": [
+        {
+          "title": "Payment Manipulation",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-639",
+          "severity": "CRITICAL",
+          "description": "Checkout or payment endpoints may allow tampering with amounts, currencies, or recipient accounts."
+        },
+        {
+          "title": "Insecure Card Data Handling",
+          "owasp": "A02:2021-Cryptographic Failures",
+          "cwe": "CWE-312",
+          "severity": "CRITICAL",
+          "description": "Cardholder data may be logged, cached, or transmitted without adequate encryption."
+        },
+        {
+          "title": "PCI-DSS Misconfiguration",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-16",
+          "severity": "HIGH",
+          "description": "Payment pages may not meet PCI-DSS hardening requirements, increasing cardholder data exposure."
+        }
+      ]
+    },
+    {
+      "functionality": "OAUTH",
+      "risks": [
+        {
+          "title": "OAuth Misconfiguration",
+          "owasp": "A07:2021-Identification and Authentication Failures",
+          "cwe": "CWE-287",
+          "severity": "HIGH",
+          "description": "OAuth flows may accept wildcard redirect URIs or weak state parameters, enabling account takeover."
+        },
+        {
+          "title": "Open Redirect via OAuth",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-601",
+          "severity": "MEDIUM",
+          "description": "Authorization endpoints may redirect to attacker-controlled URLs, enabling phishing and token theft."
+        },
+        {
+          "title": "Token Leakage in URL",
+          "owasp": "A02:2021-Cryptographic Failures",
+          "cwe": "CWE-200",
+          "severity": "MEDIUM",
+          "description": "Authorization codes or access tokens may be passed in URL fragments or query strings and leak through logs/referrers."
+        }
+      ]
+    },
+    {
+      "functionality": "PROFILE",
+      "risks": [
+        {
+          "title": "Insecure Direct Object Reference",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-639",
+          "severity": "HIGH",
+          "description": "Profile endpoints may expose or allow editing of other users' personal data by changing identifiers."
+        },
+        {
+          "title": "PII Exposure",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-200",
+          "severity": "MEDIUM",
+          "description": "Profile pages may expose personally identifiable information without proper access control."
+        },
+        {
+          "title": "Account Takeover via Profile Update",
+          "owasp": "A07:2021-Identification and Authentication Failures",
+          "cwe": "CWE-620",
+          "severity": "HIGH",
+          "description": "Profile update forms may allow changing email or password without re-authentication, enabling takeover."
+        }
+      ]
+    },
+    {
+      "functionality": "SETTINGS",
+      "risks": [
+        {
+          "title": "Privilege Escalation via Settings",
+          "owasp": "A01:2021-Broken Access Control",
+          "cwe": "CWE-269",
+          "severity": "HIGH",
+          "description": "Settings endpoints may allow users to modify roles, permissions, or security-sensitive configuration."
+        },
+        {
+          "title": "Insecure Default Configuration",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-16",
+          "severity": "MEDIUM",
+          "description": "Default settings may leave debugging, weak passwords, or public features enabled in production."
+        }
+      ]
+    },
+    {
+      "functionality": "COMMENT",
+      "risks": [
+        {
+          "title": "Stored Cross-Site Scripting",
+          "owasp": "A03:2021-Injection",
+          "cwe": "CWE-79",
+          "severity": "HIGH",
+          "description": "User-submitted comments or reviews may be rendered without output encoding, enabling stored XSS."
+        },
+        {
+          "title": "Content Injection / Spam",
+          "owasp": "A03:2021-Injection",
+          "cwe": "CWE-94",
+          "severity": "MEDIUM",
+          "description": "Comment functionality may allow injection of malicious links or content without moderation."
+        }
+      ]
+    },
+    {
+      "functionality": "CONTACT",
+      "risks": [
+        {
+          "title": "Email Header Injection",
+          "owasp": "A03:2021-Injection",
+          "cwe": "CWE-93",
+          "severity": "MEDIUM",
+          "description": "Contact forms may allow SMTP header injection, enabling spam or phishing from the server."
+        },
+        {
+          "title": "Information Disclosure",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-209",
+          "severity": "LOW",
+          "description": "Support or contact pages may leak internal email addresses, ticket IDs, or system details."
+        }
+      ]
+    },
+    {
+      "functionality": "NEWSLETTER",
+      "risks": [
+        {
+          "title": "Email Enumeration",
+          "owasp": "A07:2021-Identification and Authentication Failures",
+          "cwe": "CWE-204",
+          "severity": "LOW",
+          "description": "Newsletter subscribe responses may reveal whether an email address is already registered."
+        },
+        {
+          "title": "Subscription Abuse",
+          "owasp": "A04:2021-Insecure Design",
+          "cwe": "CWE-770",
+          "severity": "LOW",
+          "description": "Subscription forms may lack rate limiting, allowing mass sign-ups or harassment."
+        }
+      ]
+    },
+    {
+      "functionality": "WEBHOOK",
+      "risks": [
+        {
+          "title": "Server-Side Request Forgery",
+          "owasp": "A10:2021-Server-Side Request Forgery (SSRF)",
+          "cwe": "CWE-918",
+          "severity": "HIGH",
+          "description": "Webhook endpoints may fetch attacker-supplied URLs, exposing internal services."
+        },
+        {
+          "title": "Webhook Secret Leakage",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-798",
+          "severity": "HIGH",
+          "description": "Webhook signing secrets may be exposed in client-side code or logs."
+        },
+        {
+          "title": "Replay Attack",
+          "owasp": "A02:2021-Cryptographic Failures",
+          "cwe": "CWE-323",
+          "severity": "MEDIUM",
+          "description": "Webhook payloads may lack timestamp or nonce validation, allowing replay of old events."
+        }
+      ]
+    },
+    {
+      "functionality": "REPORTING",
+      "risks": [
+        {
+          "title": "Sensitive Data Export",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-200",
+          "severity": "HIGH",
+          "description": "Reporting endpoints may export sensitive data without adequate access control or auditing."
+        },
+        {
+          "title": "Information Disclosure",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-209",
+          "severity": "MEDIUM",
+          "description": "Reports may expose internal identifiers, revenue figures, or user activity."
+        }
+      ]
+    },
+    {
+      "functionality": "MONITORING",
+      "risks": [
+        {
+          "title": "Unauthenticated Metrics Exposure",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-200",
+          "severity": "MEDIUM",
+          "description": "Health, metrics, or status pages may leak system internals without authentication."
+        },
+        {
+          "title": "Information Disclosure",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-209",
+          "severity": "LOW",
+          "description": "Monitoring endpoints may reveal version numbers, dependency details, or internal routes."
+        }
+      ]
+    },
+    {
+      "functionality": "DOCS",
+      "risks": [
+        {
+          "title": "Sensitive Endpoint Disclosure",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-200",
+          "severity": "MEDIUM",
+          "description": "Documentation may reveal internal endpoints, API keys, or implementation details useful to attackers."
+        },
+        {
+          "title": "API Key Exposure in Examples",
+          "owasp": "A05:2021-Security Misconfiguration",
+          "cwe": "CWE-798",
+          "severity": "HIGH",
+          "description": "Documentation examples may include hardcoded credentials or valid API keys."
+        }
+      ]
     }
   ]
 }

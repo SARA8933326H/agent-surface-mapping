@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import {
   AssetExtract,
   CreateScanDto,
+  DomainInfoDto,
   EndpointExtract,
   FormExtract,
   GraphData,
@@ -30,6 +31,7 @@ export interface CompleteScanData {
   techStack: string[];
   errors: string[];
   durationMs: number;
+  domainInfo?: DomainInfoDto;
 }
 
 @Injectable()
@@ -261,6 +263,7 @@ export class ScanService {
           classifications: data.classifications as any,
           errors: data.errors as any,
           techStack: data.techStack as any,
+          domainInfo: data.domainInfo as any,
           updatedAt: new Date(),
         },
       });
@@ -447,6 +450,7 @@ export class ScanService {
       errors: (scan.errors as string[]) || [],
       durationMs: scan.durationMs,
       techStack: (scan.techStack as string[]) || [],
+      domainInfo: (scan.domainInfo as DomainInfoDto) || undefined,
     };
   }
 

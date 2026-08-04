@@ -157,9 +157,10 @@ test suite, and builds the frontend on every push to `master`/`dev` and every PR
 
 1. User enters an authorized URL.
 2. The backend enqueues a crawl job on BullMQ.
-3. The worker launches Playwright, explores the application, and extracts pages, forms, endpoints, assets, cookies, headers, and screenshots.
-4. Heuristic classification identifies auth, admin, dashboard, search, CRUD, upload, download, API, GraphQL, and hidden pages.
-5. A local JSON knowledge base maps each discovered functionality to OWASP Top 10 and CWE risks.
+3. The worker performs light reconnaissance for domain targets: whois lookup, DNS record enumeration (A, AAAA, CNAME, MX, NS, TXT, SOA, DMARC), DNSSEC status, and Wayback Machine URL discovery.
+4. The worker launches Playwright, explores the application, and extracts pages, forms, endpoints, assets, cookies, headers, and screenshots.
+5. Heuristic classification identifies auth, admin, dashboard, search, CRUD, upload, download, API, GraphQL, payment, OAuth, profile, settings, comments, contact, newsletter, webhooks, reporting, monitoring, docs, and hidden/internal pages.
+5. A local JSON knowledge base maps each discovered functionality (auth, admin, dashboard, search, CRUD, upload, download, API, GraphQL, payment, OAuth, profile, settings, comments, contact, newsletter, webhooks, reporting, monitoring, docs, and hidden/internal routes) to OWASP Top 10 and CWE risks.
 6. Vulnerability detection runs passive checks on the crawled data (security headers, version disclosure, mixed content, outdated libraries, form weaknesses, JWT analysis) and optional read-only probes (sensitive paths and backup files, HTTP methods, CORS, cookie flags, HTTPS enforcement, TLS version/cert expiry, directory listing, GraphQL introspection), producing evidence-backed findings with remediation guidance.
 7. An optional local LLM can summarize existing findings against the same knowledge base; it never invents new vulnerabilities.
 8. The backend builds an internal graph of nodes (pages, forms, endpoints, scripts, auth, admin, objects) and edges (navigation, API calls, form actions, imports, relationships).

@@ -8,7 +8,7 @@ import { generateReport, reportDownloadUrl } from '@/lib/api';
 import { ReportDto } from '@surface/shared';
 
 export function ReportsList({ scanId, reports }: { scanId: string; reports: ReportDto[] }) {
-  const [format, setFormat] = useState<'PDF' | 'MARKDOWN' | 'JSON'>('PDF');
+  const [format, setFormat] = useState<'PDF' | 'MARKDOWN' | 'JSON' | 'TXT'>('PDF');
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<ReportDto[]>(reports);
 
@@ -29,10 +29,11 @@ export function ReportsList({ scanId, reports }: { scanId: string; reports: Repo
       </CardHeader>
       <CardContent>
         <div className="mb-4 flex gap-2">
-          <Select value={format} onChange={(e) => setFormat(e.target.value as 'PDF' | 'MARKDOWN' | 'JSON')}>
+          <Select value={format} onChange={(e) => setFormat(e.target.value as 'PDF' | 'MARKDOWN' | 'JSON' | 'TXT')}>
             <option value="PDF">PDF</option>
             <option value="MARKDOWN">Markdown</option>
             <option value="JSON">JSON</option>
+            <option value="TXT">Plain Text</option>
           </Select>
           <Button onClick={onGenerate} disabled={loading}>
             {loading ? 'Generating...' : 'Generate'}
