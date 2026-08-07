@@ -12,6 +12,7 @@
     "start:frontend": "pnpm --filter @surface/frontend start",
     "db:generate": "pnpm --filter @surface/backend db:generate",
     "db:migrate": "pnpm --filter @surface/backend db:migrate",
+    "db:deploy": "pnpm --filter @surface/backend db:deploy",
     "test": "pnpm --filter @surface/backend test"
   },
   "workspaces": [
