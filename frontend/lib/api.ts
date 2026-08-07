@@ -9,6 +9,7 @@ function authHeaders(): Record<string, string> {
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
+    cache: 'no-store',
     ...init,
     headers: { 'Content-Type': 'application/json', ...authHeaders(), ...(init?.headers || {}) },
   });
