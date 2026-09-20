@@ -13,7 +13,7 @@ export class ReportController {
     @Param('scanId') scanId: string,
     @Param('format') format: string,
   ) {
-    const fmt = format.toUpperCase() as 'PDF' | 'MARKDOWN' | 'JSON' | 'TXT';
+    const fmt = format.toUpperCase() as 'PDF' | 'MARKDOWN' | 'JSON' | 'TXT' | 'AI';
     return this.reportService.generate(scanId, fmt);
   }
 
