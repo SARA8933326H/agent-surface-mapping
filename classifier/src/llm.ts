@@ -4,6 +4,8 @@ import { RiskDto, Severity } from '@surface/shared';
 export interface LLMOptions {
   ollamaHost?: string;
   model?: string;
+  geminiApiKey?: string;
+  geminiModel?: string;
   timeoutMs?: number;
 }
 
@@ -29,24 +31,43 @@ export async function summarizeWithLLM(
   const host = options.ollamaHost || process.env.OLLAMA_HOST || 'http://127.0.0.1:11434';
   const model = options.model || process.env.OLLAMA_MODEL || 'gemma:2b';
   const timeoutMs = options.timeoutMs || 30000;
+  const geminiApiKey = options.geminiApiKey || process.env.GEMINI_API_KEY;
+  const geminiModel = options.geminiModel || process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 
-  // If OLLAMA_HOST is explicitly disabled or unreachable, skip LLM.
+  // If LLM is explicitly disabled, skip LLM.
   if (process.env.DISABLE_LLM === 'true') return null;
 
   const prompt = buildPrompt(summary);
 
   try {
-    const res = await axios.post(
-      `${host}/api/generate`,
-      {
-        model,
-        prompt,
-        stream: false,
-        format: 'json',
-      },
-      { timeout: timeoutMs },
-    );
-    const text = res.data?.response || '';
+    let text = '';
+    
+    if (geminiApiKey) {
+      const res = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`,
+        {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+          },
+        },
+        { timeout: timeoutMs },
+      );
+      text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    } else {
+      const res = await axios.post(
+        `${host}/api/generate`,
+        {
+          model,
+          prompt,
+          stream: false,
+          format: 'json',
+        },
+        { timeout: timeoutMs },
+      );
+      text = res.data?.response || '';
+    }
+
     const suggestions = extractJSON<LLMRiskSuggestion[]>(text) || [];
     return suggestions
       .filter((s) => s.category && s.description)
@@ -56,9 +77,12 @@ export async function summarizeWithLLM(
         owasp: s.owasp,
         cwe: s.cwe,
         severity: normalizeSeverity(s.severity) as Severity,
-        evidence: s.evidence || 'Suggested by local LLM from existing heuristic classification.',
+        evidence: s.evidence || (geminiApiKey ? 'Suggested by Gemini LLM from existing heuristic classification.' : 'Suggested by local LLM from existing heuristic classification.'),
       }));
-  } catch {
+  } catch (error: any) {
+    if (geminiApiKey) {
+      console.warn('Gemini LLM risk mapping failed:', error?.response?.data?.error?.message || error?.message || error);
+    }
     return null;
   }
 }

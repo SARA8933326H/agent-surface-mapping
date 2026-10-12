@@ -189,10 +189,11 @@ resolved vulnerabilities.
 
 ## Reports
 
-Reports are generated in three formats:
+Reports are generated in four formats:
 
 - **PDF:** Rendered via Playwright from a generated HTML report
 - **Markdown:** Human-readable summary with OWASP/CWE mapping
+- **AI:** Highly structured AI-generated executive summary (requires Gemini)
 - **JSON:** Full machine-readable scan output
 
 Generated reports are stored locally in `./reports-output` (or `/app/reports-output` in Docker).

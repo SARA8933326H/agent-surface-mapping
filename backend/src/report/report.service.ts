@@ -35,8 +35,12 @@ export class ReportService {
     } else if (format === 'PDF') {
       await generatePdfReport(scan, filePath);
     } else if (format === 'AI') {
-      const aiReport = await generateAiReport(scan);
-      await writeFile(filePath, aiReport, 'utf-8');
+      try {
+        const aiReport = await generateAiReport(scan);
+        await writeFile(filePath, aiReport, 'utf-8');
+      } catch (err: any) {
+        throw new BadRequestException(err?.message || 'Failed to generate AI report');
+      }
     } else {
       throw new BadRequestException(`Unsupported format: ${format}`);
     }

@@ -193,7 +193,7 @@ export interface ScanDetailsDto extends ScanDto {
 export interface ReportDto {
     id: string;
     scanId: string;
-    format: 'PDF' | 'MARKDOWN' | 'JSON';
+    format: 'PDF' | 'MARKDOWN' | 'JSON' | 'TXT' | 'AI';
     path: string;
     createdAt: string;
 }

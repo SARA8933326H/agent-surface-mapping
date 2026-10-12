@@ -9,6 +9,8 @@ export const Config = {
   REPORT_DIR: process.env.REPORT_DIR || './reports-output',
   OLLAMA_HOST: process.env.OLLAMA_HOST,
   OLLAMA_MODEL: process.env.OLLAMA_MODEL,
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
   DISABLE_LLM: process.env.DISABLE_LLM === 'true',
   WORKER_CONCURRENCY: parseInt(process.env.WORKER_CONCURRENCY || '2', 10),
   QUEUE_ATTEMPTS: parseInt(process.env.QUEUE_ATTEMPTS || '3', 10),

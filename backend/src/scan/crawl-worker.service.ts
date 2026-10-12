@@ -118,8 +118,10 @@ export class CrawlWorker implements OnModuleDestroy {
       const detected = await this.vulnService.runChecks(url, pages, result.forms, result.assets, result.endpoints);
       risks = [...risks, ...detected];
 
-      if (!Config.DISABLE_LLM && Config.OLLAMA_HOST) {
+      if (!Config.DISABLE_LLM && (Config.GEMINI_API_KEY || Config.OLLAMA_HOST)) {
         const llmRisks = await summarizeWithLLM(summary, {
+          geminiApiKey: Config.GEMINI_API_KEY,
+          geminiModel: Config.GEMINI_MODEL,
           ollamaHost: Config.OLLAMA_HOST,
           model: Config.OLLAMA_MODEL,
         });
